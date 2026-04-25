@@ -57,7 +57,7 @@ def _get_client() -> OpenAI:
 
     databricks_host  = os.environ.get("DATABRICKS_HOST", "").rstrip("/")
     databricks_token = os.environ.get("DATABRICKS_TOKEN", "")
-    sarvam_key       = os.environ.get("SARVAM_API_KEY", "")
+    sarvam_key       = "sk_b9xcezjh_xyzTpHUTifcZYKwB65cyqC55"
     hf_token         = os.environ.get("HF_TOKEN", "")
 
     if databricks_host and databricks_token:
