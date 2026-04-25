@@ -4,6 +4,7 @@ Supports Hindi/English responses and streaming.
 """
 
 from __future__ import annotations
+import logging
 import os
 import re
 import sys
@@ -18,6 +19,8 @@ from core.settings import (
     LLM_BASE_URL, LLM_API_KEY, LLM_MODEL,
     MAX_TOKENS_ANSWER, TEMPERATURE_LEGAL
 )
+
+logger = logging.getLogger(__name__)
 
 # ── System Prompts ──────────────────────────────────────────────────────────────
 
@@ -61,28 +64,23 @@ def _get_client() -> OpenAI:
     hf_token         = os.environ.get("HF_TOKEN", "")
 
     if databricks_host and databricks_token:
-        provider = "databricks"
         api_key  = databricks_token
         base_url = f"{databricks_host}/serving-endpoints"
         model    = os.environ.get("LLM_MODEL", "databricks-llama-4-maverick")
     elif sarvam_key:
-        provider = "sarvam"
         api_key  = sarvam_key
         base_url = os.environ.get("SARVAM_API_BASE", "https://api.sarvam.ai/v1")
         model    = "sarvam-m"
     else:
-        provider = "huggingface"
         api_key  = hf_token
         base_url = os.environ.get("HF_BASE_URL", "https://api-inference.huggingface.co/v1")
         model    = "sarvamai/sarvam-m"
 
-    print(
-        "[LLM Debug] client_resolved "
-        f"provider={provider} base_url={base_url} model={model} "
-        f"databricks_host_set={bool(databricks_host)} "
-        f"databricks_token_set={bool(databricks_token)} "
-        f"sarvam_key_set={bool(sarvam_key)} hf_token_set={bool(hf_token)} "
-        f"api_key_set={bool(api_key)}"
+    logger.debug(
+        "[LLM Debug] client_resolved base_url=%s model=%s databricks_host_set=%s",
+        base_url,
+        model,
+        bool(databricks_host),
     )
 
     # store resolved model so chat() can use it
@@ -129,11 +127,16 @@ def chat(
         return _stream_response(client, full_messages, max_tokens, temperature)
     else:
         try:
-            print(
-                "[LLM Debug] chat_request "
-                f"model={_get_client.model} base_url={getattr(client, 'base_url', 'unknown')} "
-                f"language={language} max_tokens={max_tokens} temperature={temperature} "
-                f"message_count={len(full_messages)} stream={stream}"
+            logger.debug(
+                "[LLM Debug] chat_request model=%s base_url=%s language=%s "
+                "max_tokens=%s temperature=%s message_count=%s stream=%s",
+                _get_client.model,
+                getattr(client, "base_url", "unknown"),
+                language,
+                max_tokens,
+                temperature,
+                len(full_messages),
+                stream,
             )
             response = client.chat.completions.create(
                 model=_get_client.model,
@@ -144,15 +147,12 @@ def chat(
             raw = response.choices[0].message.content or ""
             return _strip_think_tags(raw)
         except Exception as e:
-            import traceback
-            print(
-                "[LLM Debug] chat_request_failed "
-                f"error_type={type(e).__name__} "
-                f"status_code={getattr(e, 'status_code', None)} "
-                f"request_id={getattr(e, 'request_id', None)}"
+            logger.exception(
+                "[LLM Debug] chat_request_failed error_type=%s status_code=%s request_id=%s",
+                type(e).__name__,
+                getattr(e, "status_code", None),
+                getattr(e, "request_id", None),
             )
-            print(f"[LLM Debug] error_detail={e}")
-            traceback.print_exc()
             return f"⚠️ LLM Error: {type(e).__name__}: {e}\n\nPlease check your API token and network connection."
 
 
@@ -164,10 +164,14 @@ def _stream_response(
 ) -> Iterator[str]:
     """Yield text chunks from a streaming response."""
     try:
-        print(
-            "[LLM Debug] stream_request "
-            f"model={_get_client.model} base_url={getattr(client, 'base_url', 'unknown')} "
-            f"max_tokens={max_tokens} temperature={temperature} message_count={len(messages)}"
+        logger.debug(
+            "[LLM Debug] stream_request model=%s base_url=%s max_tokens=%s "
+            "temperature=%s message_count=%s",
+            _get_client.model,
+            getattr(client, "base_url", "unknown"),
+            max_tokens,
+            temperature,
+            len(messages),
         )
         stream = client.chat.completions.create(
             model=_get_client.model,
@@ -202,13 +206,12 @@ def _stream_response(
                         buffer = ""  # discard think content
                         break
     except Exception as e:
-        print(
-            "[LLM Debug] stream_request_failed "
-            f"error_type={type(e).__name__} "
-            f"status_code={getattr(e, 'status_code', None)} "
-            f"request_id={getattr(e, 'request_id', None)}"
+        logger.exception(
+            "[LLM Debug] stream_request_failed error_type=%s status_code=%s request_id=%s",
+            type(e).__name__,
+            getattr(e, "status_code", None),
+            getattr(e, "request_id", None),
         )
-        print(f"[LLM Debug] error_detail={e}")
         yield f"⚠️ Streaming error: {e}"
 
 

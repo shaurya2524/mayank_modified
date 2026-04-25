@@ -1,10 +1,13 @@
 """
 Nyaya-Sahayak — Premium Streamlit UI
 """
+import logging
 import sys, os, json
 from pathlib import Path
 import streamlit as st
 import pandas as pd
+
+logger = logging.getLogger(__name__)
 
 
 ROOT = Path(__file__).parent
@@ -518,11 +521,11 @@ with tab1:
                             cache.store(user_q, answer)
 
                 except Exception as e:
-                    print(
-                        "[App Debug] chat_query_failed "
-                        f"error_type={type(e).__name__} "
-                        f"language={st.session_state.get('chat_lang', 'auto')} "
-                        f"query={user_q!r} detail={e}"
+                    logger.exception(
+                        "[App Debug] chat_query_failed error_type=%s language=%s query_len=%s",
+                        type(e).__name__,
+                        st.session_state.get("chat_lang", "auto"),
+                        len(user_q),
                     )
                     answer = f"⚠️ Error: {e}\n\nPlease check your API token and network connection."
 
