@@ -21,11 +21,27 @@ SARVAM_MODEL     = os.getenv("SARVAM_MODEL", "sarvamai/sarvam-m")
 SARVAM_API_KEY   = os.getenv("SARVAM_API_KEY", "")
 SARVAM_API_BASE  = os.getenv("SARVAM_API_BASE", "https://api.sarvam.ai/v1")
 
-# Decide which endpoint to use
-USE_SARVAM_DIRECT = bool(SARVAM_API_KEY)
-LLM_BASE_URL = SARVAM_API_BASE if USE_SARVAM_DIRECT else HF_BASE_URL
-LLM_API_KEY  = SARVAM_API_KEY  if USE_SARVAM_DIRECT else HF_TOKEN
-LLM_MODEL    = "sarvam-m"      if USE_SARVAM_DIRECT else SARVAM_MODEL
+# Databricks Serving Endpoints (takes priority over Sarvam / HuggingFace)
+DATABRICKS_HOST  = os.getenv("DATABRICKS_HOST", "").rstrip("/")
+DATABRICKS_TOKEN = os.getenv("DATABRICKS_TOKEN", "")
+DATABRICKS_MODEL = os.getenv("LLM_MODEL", "databricks-llama-4-maverick")
+
+# Decide which endpoint to use: Databricks > Sarvam > HuggingFace
+if DATABRICKS_HOST and DATABRICKS_TOKEN:
+    LLM_BASE_URL      = f"{DATABRICKS_HOST}/serving-endpoints"
+    LLM_API_KEY       = DATABRICKS_TOKEN
+    LLM_MODEL         = DATABRICKS_MODEL
+    USE_SARVAM_DIRECT = False
+elif SARVAM_API_KEY:
+    LLM_BASE_URL      = SARVAM_API_BASE
+    LLM_API_KEY       = SARVAM_API_KEY
+    LLM_MODEL         = "sarvam-m"
+    USE_SARVAM_DIRECT = True
+else:
+    LLM_BASE_URL      = HF_BASE_URL
+    LLM_API_KEY       = HF_TOKEN
+    LLM_MODEL         = SARVAM_MODEL
+    USE_SARVAM_DIRECT = False
 
 # ── Data Paths ──────────────────────────────────────────────────────────────────
 BNS_CSV_PATH          = Path(os.getenv("BNS_CSV_PATH",          ROOT / "bns_sections.csv"))

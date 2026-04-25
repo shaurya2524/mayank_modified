@@ -51,14 +51,20 @@ SYSTEM_PROMPT_HI = """आप न्याय-सहायक हैं, एक �
 # ── Client Factory ──────────────────────────────────────────────────────────────
 
 def _get_client() -> OpenAI:
-    """Return an OpenAI-compatible client pointed at Sarvam-M / HF endpoint."""
+    """Return an OpenAI-compatible client: Databricks > Sarvam > HuggingFace."""
     from dotenv import load_dotenv
     load_dotenv(Path(__file__).parent.parent / ".env", override=False)
 
-    sarvam_key = os.environ.get("SARVAM_API_KEY", "")
-    hf_token   = os.environ.get("HF_TOKEN", "")
+    databricks_host  = os.environ.get("DATABRICKS_HOST", "").rstrip("/")
+    databricks_token = os.environ.get("DATABRICKS_TOKEN", "")
+    sarvam_key       = os.environ.get("SARVAM_API_KEY", "")
+    hf_token         = os.environ.get("HF_TOKEN", "")
 
-    if sarvam_key:
+    if databricks_host and databricks_token:
+        api_key  = databricks_token
+        base_url = f"{databricks_host}/serving-endpoints"
+        model    = os.environ.get("LLM_MODEL", "databricks-llama-4-maverick")
+    elif sarvam_key:
         api_key  = sarvam_key
         base_url = os.environ.get("SARVAM_API_BASE", "https://api.sarvam.ai/v1")
         model    = "sarvam-m"
