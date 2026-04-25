@@ -6,3 +6,9 @@ command: [
 env:
   - name: sarvam_api_key
     valueFrom: sarvam_api_key
+
+  - name: DATABRICKS_HOST
+    value: https://dbc-e6eacb6d-8940.cloud.databricks.com/
+
+  - name: DATABRICKS_TOKEN
+    valueFrom: databricks_pat
