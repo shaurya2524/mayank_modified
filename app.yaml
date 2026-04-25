@@ -5,4 +5,4 @@ command: [
 ]
 env:
   - name: sarvam_api_key
-    valueFrom: sarvam_api_key
+    valueFrom: nyaya/sarvam_api_key

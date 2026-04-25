@@ -5,6 +5,7 @@
 # MAGIC **Just clone this repo into Databricks and click "Run All" on this notebook.**
 # MAGIC
 # MAGIC This notebook will:
+# MAGIC 0. (One-time only) Set up the Sarvam API Secret — see Step 0 below
 # MAGIC 1. Create catalog `legal_catalog` + schema `nyaya_sahayak` + required Volumes
 # MAGIC 2. Copy data files from the cloned repo into the Volumes
 # MAGIC 3. Build all four Gold-layer Delta tables with Change Data Feed enabled
@@ -12,6 +13,36 @@
 # MAGIC 5. Create three Vector Search indexes (`bns_gold_index`, `ipc_gold_index`, `schemes_gold_index`)
 # MAGIC
 # MAGIC After this finishes, the Streamlit app is ready to deploy via **Compute → Apps**.
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ## Step 0 — Set up the Sarvam API Secret  (run ONCE per workspace)
+# MAGIC
+# MAGIC The Streamlit app reads the Sarvam API key from a Databricks Secret called `sarvam_api_key`.
+# MAGIC The cell below creates it for you. **Replace the placeholder with your actual Sarvam key**, run the cell once, then delete the cell (or just leave it — `put` is idempotent).
+# MAGIC
+# MAGIC ```python
+# MAGIC # ▼ RUN THIS ONCE THEN COMMENT OUT ▼
+# MAGIC # try:
+# MAGIC #     dbutils.secrets.createScope("nyaya")
+# MAGIC # except Exception:
+# MAGIC #     pass  # scope already exists
+# MAGIC # dbutils.secrets.put(
+# MAGIC #     scope="nyaya",
+# MAGIC #     key="sarvam_api_key",
+# MAGIC #     string_value="sk_your_sarvam_key_here",
+# MAGIC # )
+# MAGIC # print("✅ Secret 'nyaya/sarvam_api_key' set.")
+# MAGIC ```
+# MAGIC
+# MAGIC Then update `app.yaml` so the env var resolves from this secret:
+# MAGIC ```yaml
+# MAGIC env:
+# MAGIC   - name: sarvam_api_key
+# MAGIC     valueFrom: nyaya/sarvam_api_key
+# MAGIC ```
+# MAGIC (already set in this repo).
 
 # COMMAND ----------
 

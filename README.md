@@ -287,19 +287,25 @@ These auto-sync forever via CDF.
 
 ### Step 5 — Store the Sarvam API key as a Databricks Secret
 
+In any Databricks notebook cell, run **once**:
+
 ```python
-# In a notebook cell
-dbutils.secrets.put(scope="nyaya", key="sarvam_api_key", string_value="sk_...")
+try:
+    dbutils.secrets.createScope("nyaya")
+except Exception:
+    pass  # scope already exists
+dbutils.secrets.put(
+    scope="nyaya",
+    key="sarvam_api_key",
+    string_value="sk_your_sarvam_key_here",
+)
 ```
 
-(Or use the Databricks CLI / REST API.)
-
-Then update `app.yaml` to reference it instead of inline:
+`app.yaml` is already configured to read from `nyaya/sarvam_api_key`:
 
 ```yaml
-command: ["streamlit", "run", "app.py"]
 env:
-  - name: SARVAM_API_KEY
+  - name: sarvam_api_key
     valueFrom: nyaya/sarvam_api_key
 ```
 
