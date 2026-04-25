@@ -16,12 +16,27 @@ HF_TOKEN         = os.getenv("HF_TOKEN", "")
 HF_BASE_URL      = os.getenv("HF_BASE_URL", "https://api-inference.huggingface.co/v1")
 SARVAM_MODEL     = os.getenv("SARVAM_MODEL", "sarvamai/sarvam-m")
 
+
+def _env_flag(name: str, default: bool) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    return str(raw).strip().lower() in {"1", "true", "yes", "y", "on"}
+
+
+# Runtime mode flags:
+# - NYAYA_LOCAL_ONLY=true  -> never attempt Databricks Vector Search connections
+# - NYAYA_DISABLE_PAGEINDEX=true -> never import/build PageIndex trees
+NYAYA_LOCAL_ONLY = _env_flag("NYAYA_LOCAL_ONLY", True)
+NYAYA_DISABLE_PAGEINDEX = _env_flag("NYAYA_DISABLE_PAGEINDEX", True)
+
 LLM_BASE_URL = "https://api.sarvam.ai/v1"
 LLM_API_KEY  = "sk_bey0cyc7_qV5jUMSHl51Oa5EiH55Nvxe8"
 LLM_MODEL    = "sarvam-m"
 
 print("API KEY LOADED:", bool(LLM_API_KEY))
 print(f"[Config] LLM endpoint: {LLM_BASE_URL} | Model: {LLM_MODEL}")
+print(f"[Config] Local-only mode: {NYAYA_LOCAL_ONLY} | PageIndex disabled: {NYAYA_DISABLE_PAGEINDEX}")
 
 # ── Data Paths ──────────────────────────────────────────────────────────────────
 BNS_CSV_PATH          = Path(os.getenv("BNS_CSV_PATH",          ROOT / "bns_sections.csv"))

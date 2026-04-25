@@ -14,6 +14,7 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from core.sarvam_engine import chat
+from core.settings import NYAYA_LOCAL_ONLY
 
 PARQUET_PATH = Path(__file__).parent.parent / "data.parquet"
 MYSCHEME_BASE = "https://www.myscheme.gov.in/schemes"
@@ -109,17 +110,21 @@ class SchemeSearchEngine:
 
     def load(self) -> "SchemeSearchEngine":
         # 1. Try Databricks Vector Search
-        try:
-            from databricks.vector_search.client import VectorSearchClient
-            client = VectorSearchClient(disable_notice=True)
-            self._dbx_index = client.get_index(
-                endpoint_name=DBX_ENDPOINT,
-                index_name=DBX_INDEX,
-            )
-            print("[Schemes] Databricks Vector Search connected ✅")
-        except Exception as e:
-            print(f"[Schemes] Databricks unavailable, using local parquet fallback. Error: {e}")
+        if NYAYA_LOCAL_ONLY:
+            print("[Schemes] Local-only mode enabled; skipping Databricks Vector Search initialization")
             self._dbx_index = None
+        else:
+            try:
+                from databricks.vector_search.client import VectorSearchClient
+                client = VectorSearchClient(disable_notice=True)
+                self._dbx_index = client.get_index(
+                    endpoint_name=DBX_ENDPOINT,
+                    index_name=DBX_INDEX,
+                )
+                print("[Schemes] Databricks Vector Search connected ✅")
+            except Exception as e:
+                print(f"[Schemes] Databricks unavailable, using local parquet fallback. Error: {e}")
+                self._dbx_index = None
 
         # 2. Always load local parquet as fallback
         if PARQUET_PATH.exists():

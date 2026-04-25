@@ -213,8 +213,24 @@ App will be live at `http://localhost:8501`.
 | `HF_TOKEN` | Optional | HuggingFace fallback for Sarvam-M |
 | `DATABRICKS_HOST` | Optional | For Mosaic AI Vector Search |
 | `DATABRICKS_TOKEN` | Optional | Databricks PAT for Vector Search |
+| `NYAYA_LOCAL_ONLY` | Optional (default: `true`) | Force local-only retrieval; skip Databricks Vector Search init |
+| `NYAYA_DISABLE_PAGEINDEX` | Optional (default: `true`) | Disable PageIndex import/build and use built-in local keyword fallback |
 
 If only `SARVAM_API_KEY` is set, the app falls back to local indexes — chatbot, schemes, FIR, bail all work, just without Mosaic AI.
+
+---
+
+## ☁️ Databricks Workspace Deploy (No Unity Catalog / No Vector Search)
+
+If you just want to import this repo into a Databricks workspace folder and deploy quickly without catalog/index setup:
+
+1. Keep only LLM secret configured (`SARVAM_API_KEY`).
+2. Set:
+   - `NYAYA_LOCAL_ONLY=true`
+   - `NYAYA_DISABLE_PAGEINDEX=true`
+3. Deploy the app from repo with `app.yaml`.
+
+This runs fully in local-fallback mode (BNS/IPC markdown + local parquet/CSV retrieval) and skips all Unity Catalog / Vector Search startup calls.
 
 ---
 

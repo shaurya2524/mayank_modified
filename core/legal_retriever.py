@@ -13,7 +13,8 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from core.settings import (
     BNS_CSV_PATH, BNS_INDEX_PATH, IPC_INDEX_PATH, ROOT,
-    LLM_MODEL, LLM_API_KEY, LLM_BASE_URL
+    LLM_MODEL, LLM_API_KEY, LLM_BASE_URL,
+    NYAYA_LOCAL_ONLY, NYAYA_DISABLE_PAGEINDEX
 )
 
 from dotenv import load_dotenv
@@ -120,7 +121,10 @@ class PageIndexRAG:
         self._pi = None
 
     def _load_pageindex(self):
-        """Try to import and configure PageIndex."""
+        """Try to import and configure PageIndex; returns True only when PageIndex is ready."""
+        if NYAYA_DISABLE_PAGEINDEX:
+            print(f"[RAG/Local/{self.label}] PageIndex disabled by config, using built-in retrieval")
+            return False
         try:
             import litellm
             # Configure litellm to use HF endpoint
@@ -240,21 +244,25 @@ class NyayaRAGEngine:
 
     def initialize(self) -> "NyayaRAGEngine":
         # 1. Try to connect to Databricks
-        try:
-            from databricks.vector_search.client import VectorSearchClient
-            self.dbx_client = VectorSearchClient(disable_notice=True)
-            self.bns_dbx_index = self.dbx_client.get_index(
-                endpoint_name=self.endpoint_name,
-                index_name="legal_catalog.nyaya_sahayak.bns_gold_index"
-            )
-            self.ipc_dbx_index = self.dbx_client.get_index(
-                endpoint_name=self.endpoint_name,
-                index_name="legal_catalog.nyaya_sahayak.ipc_gold_index"
-            )
-            print("[RAG] Databricks Mosaic AI Engine connected ✅")
-        except Exception as e:
-            print(f"[RAG] Databricks connection failed, using local index fallback. Error: {e}")
+        if NYAYA_LOCAL_ONLY:
+            print("[RAG] Local-only mode enabled; skipping Databricks Vector Search initialization")
             self.dbx_client = None
+        else:
+            try:
+                from databricks.vector_search.client import VectorSearchClient
+                self.dbx_client = VectorSearchClient(disable_notice=True)
+                self.bns_dbx_index = self.dbx_client.get_index(
+                    endpoint_name=self.endpoint_name,
+                    index_name="legal_catalog.nyaya_sahayak.bns_gold_index"
+                )
+                self.ipc_dbx_index = self.dbx_client.get_index(
+                    endpoint_name=self.endpoint_name,
+                    index_name="legal_catalog.nyaya_sahayak.ipc_gold_index"
+                )
+                print("[RAG] Databricks Mosaic AI Engine connected ✅")
+            except Exception as e:
+                print(f"[RAG] Databricks connection failed, using local index fallback. Error: {e}")
+                self.dbx_client = None
 
         # 2. Build local indices regardless (for fallback)
         self.local_bns_index.build()
