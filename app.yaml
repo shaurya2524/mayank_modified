@@ -1,0 +1,8 @@
+command: [
+  "streamlit",
+  "run",
+  "app.py"
+]
+env:
+  - name: "SARVAM_API_KEY"
+    value: "sk_9x6vy1da_PNwZpiofHzCExg6gL7jWejYo"
