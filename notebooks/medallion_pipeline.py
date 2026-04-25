@@ -36,19 +36,56 @@ print("Sarvam key visible to notebook env:", bool(os.environ.get("sarvam_api_key
 # ==========================================================================
 # 0. CONFIG & PATH RESOLUTION
 # ==========================================================================
-import os
+import os, glob
 
 CATALOG  = "legal_catalog"
 SCHEMA   = "nyaya_sahayak"
 ENDPOINT = "nyaya_sahayak_endpoint"
 
-# Resolve repo root from this notebook's location: /Workspace/<repo>/notebooks/<this>.py
-notebook_path = (
-    dbutils.notebook.entry_point.getDbutils().notebook()
-    .getContext().notebookPath().get()
-)
-REPO_ROOT_WS = "/Workspace" + os.path.dirname(os.path.dirname(notebook_path))
+# Try multiple ways to find the repo root, since Databricks paths vary
+# by workspace setup (Repos vs. Workspace, with/without /Workspace prefix).
+def _find_repo_root():
+    candidates = []
+
+    # 1. From notebook context
+    try:
+        nb_path = (
+            dbutils.notebook.entry_point.getDbutils().notebook()
+            .getContext().notebookPath().get()
+        )
+        # nb_path is like /Repos/user/repo/notebooks/medallion_pipeline
+        repo_relative = os.path.dirname(os.path.dirname(nb_path))
+        candidates += [
+            "/Workspace" + repo_relative,
+            repo_relative,
+        ]
+    except Exception as e:
+        print(f"  notebook context: {e}")
+
+    # 2. From CWD
+    cwd = os.getcwd()
+    candidates += [cwd, os.path.dirname(cwd)]
+
+    # 3. Scan /Workspace/Repos for any folder containing bns_sections.csv
+    for hit in glob.glob("/Workspace/Repos/*/*/bns_sections.csv"):
+        candidates.append(os.path.dirname(hit))
+    for hit in glob.glob("/Workspace/Users/*/*/bns_sections.csv"):
+        candidates.append(os.path.dirname(hit))
+
+    for c in candidates:
+        marker = os.path.join(c, "bns_sections.csv")
+        if os.path.exists(marker):
+            return c
+
+    raise RuntimeError(
+        "Could not find repo root containing bns_sections.csv.\n"
+        f"Searched: {candidates}\n"
+        "Make sure this notebook is run from inside a cloned Databricks Repo."
+    )
+
+REPO_ROOT_WS = _find_repo_root()
 print(f"📁 Repo root resolved to: {REPO_ROOT_WS}")
+print(f"   Files there: {os.listdir(REPO_ROOT_WS)[:6]} ...")
 
 VOL_IPC     = f"/Volumes/{CATALOG}/{SCHEMA}/ipc"
 VOL_SCHEMES = f"/Volumes/{CATALOG}/{SCHEMA}/schemes"
@@ -67,10 +104,8 @@ print("✅ Catalog, schema, and volumes ready.")
 # COMMAND ----------
 
 # ==========================================================================
-# 2. COPY DATA FILES FROM REPO → VOLUMES
+# 2. COPY DATA FILES FROM REPO → VOLUMES (using dbutils.fs for reliability)
 # ==========================================================================
-import shutil
-
 FILES_TO_COPY = [
     (f"{REPO_ROOT_WS}/bns_sections.csv",            f"{VOL_IPC}/bns_sections.csv"),
     (f"{REPO_ROOT_WS}/250883_english_01042024.pdf", f"{VOL_IPC}/250883_english_01042024.pdf"),
@@ -79,11 +114,28 @@ FILES_TO_COPY = [
 ]
 
 for src, dst in FILES_TO_COPY:
-    if os.path.exists(src):
-        shutil.copy2(src, dst)
+    if not os.path.exists(src):
+        print(f"❌ Missing source: {src}")
+        continue
+    try:
+        dbutils.fs.cp(f"file:{src}", dst, recurse=False)
         print(f"✅ {os.path.basename(src)}  →  {dst}")
-    else:
-        print(f"⚠️  Missing source: {src}")
+    except Exception as e1:
+        # Fallback: read bytes and write via dbutils.fs.put or shutil
+        try:
+            import shutil
+            shutil.copy2(src, dst)
+            print(f"✅ (shutil) {os.path.basename(src)}  →  {dst}")
+        except Exception as e2:
+            print(f"❌ Both copy methods failed for {src}:\n  dbutils.fs: {e1}\n  shutil:    {e2}")
+
+# Verify
+print("\nVolume contents:")
+for vol in (VOL_IPC, VOL_SCHEMES):
+    try:
+        print(f"  {vol}: {os.listdir(vol)}")
+    except Exception as e:
+        print(f"  {vol}: <unable to list — {e}>")
 
 # COMMAND ----------
 
