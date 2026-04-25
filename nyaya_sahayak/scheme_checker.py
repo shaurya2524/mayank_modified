@@ -199,24 +199,6 @@ class SchemeSearchEngine:
                 print(f"[Schemes] Databricks query failed, falling back: {e}")
         return self._search_local(query, top_k)
 
-    def _format_results(self, df: pd.DataFrame) -> list[dict]:
-        results = []
-        for _, row in df.iterrows():
-            slug = str(row.get("slug", "")).strip()
-            results.append({
-                "name": str(row["scheme_name"]).strip(),
-                "category": str(row.get("schemeCategory", "General")).strip(),
-                "benefit": str(row.get("benefits", ""))[:250].strip(),
-                "description": str(row.get("eligibility", ""))[:150].strip(),
-                "url": f"{MYSCHEME_BASE}/{slug}" if slug else "",
-                "_score": int(row.get("_score", 0)),
-                "hindi_name": "",
-                "level": str(row.get("level", "")).strip(),
-                "tags": str(row.get("tags", "")).strip(),
-                "application": str(row.get("application", ""))[:300].strip(),
-            })
-        return results
-
     def check_eligibility(self, profile: dict, language: str = "en") -> dict:
         """Search schemes from profile, return top matches + LLM explanation."""
         query = _profile_to_query(profile)
