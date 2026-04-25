@@ -1,233 +1,316 @@
 # Databricks notebook source
-# Read the CSV from your Volume
-bns_df = spark.read.format("csv") \
-    .option("header", "true") \
-    .option("inferSchema", "true") \
-    .load("/Volumes/legal_catalog/nyaya_sahayak/ipc/bns_sections.csv")
-
-# Clean column names (strip spaces, replaces with underscores)
-for col in bns_df.columns:
-    bns_df = bns_df.withColumnRenamed(col, col.strip().replace(" ", "_"))
-
-# Save as a permanent Delta Table
-bns_df.write.format("delta") \
-    .mode("overwrite") \
-    .saveAsTable("legal_catalog.nyaya_sahayak.bns_main")
-
-print("✅ BNS Main Table Created!")
-
-
-# COMMAND ----------
-
-# MAGIC %pip install pdfplumber
+# MAGIC %md
+# MAGIC # Nyaya-Sahayak — One-Click Setup
 # MAGIC
-
-# COMMAND ----------
-
-import pdfplumber
-import io
-
-pdf_path = "/Volumes/legal_catalog/nyaya_sahayak/ipc/250883_english_01042024.pdf"
-
-# Extract text from PDF
-with pdfplumber.open(pdf_path) as pdf:
-    full_text = "\n".join([page.extract_text() for page in pdf.pages if page.extract_text()])
-
-# Create a simple single-row table with the full text for now
-spark.createDataFrame([(full_text,)], ["raw_text"]) \
-    .write.format("delta") \
-    .mode("overwrite") \
-    .saveAsTable("legal_catalog.nyaya_sahayak.ipc_raw_text")
-
-print("✅ IPC Raw Text Saved to Delta!")
-
-
-# COMMAND ----------
-
-import pdfplumber
-import io
-
-repealed_path = "/Volumes/legal_catalog/nyaya_sahayak/ipc/repealedfileopen.pdf"
-
-with pdfplumber.open(repealed_path) as pdf:
-    # We extract this into a separate table so the AI can specifically check 
-    # if an old law still exists or has been repealed.
-    repealed_text = "\n".join([page.extract_text() for page in pdf.pages if page.extract_text()])
-
-spark.createDataFrame([(repealed_text,)], ["repealed_context"]) \
-    .write.format("delta") \
-    .mode("overwrite") \
-    .saveAsTable("legal_catalog.nyaya_sahayak.ipc_repealed_reference")
-
-print("✅ Repealed Provisions Table Created!")
-
-
-# COMMAND ----------
-
-# MAGIC %sql
-# MAGIC SELECT * FROM legal_catalog.nyaya_sahayak.bns_main LIMIT 10;
+# MAGIC **Just clone this repo into Databricks and click "Run All" on this notebook.**
 # MAGIC
+# MAGIC This notebook will:
+# MAGIC 1. Create catalog `legal_catalog` + schema `nyaya_sahayak` + required Volumes
+# MAGIC 2. Copy data files from the cloned repo into the Volumes
+# MAGIC 3. Build all four Gold-layer Delta tables with Change Data Feed enabled
+# MAGIC 4. Create a Mosaic AI Vector Search endpoint
+# MAGIC 5. Create three Vector Search indexes (`bns_gold_index`, `ipc_gold_index`, `schemes_gold_index`)
+# MAGIC
+# MAGIC After this finishes, the Streamlit app is ready to deploy via **Compute → Apps**.
 
 # COMMAND ----------
 
+# MAGIC %pip install pdfplumber databricks-vectorsearch
+# MAGIC %restart_python
+
+# COMMAND ----------
+
+# ==========================================================================
+# 0. CONFIG & PATH RESOLUTION
+# ==========================================================================
+import os
+
+CATALOG  = "legal_catalog"
+SCHEMA   = "nyaya_sahayak"
+ENDPOINT = "nyaya_sahayak_endpoint"
+
+# Resolve repo root from this notebook's location: /Workspace/<repo>/notebooks/<this>.py
+notebook_path = (
+    dbutils.notebook.entry_point.getDbutils().notebook()
+    .getContext().notebookPath().get()
+)
+REPO_ROOT_WS = "/Workspace" + os.path.dirname(os.path.dirname(notebook_path))
+print(f"📁 Repo root resolved to: {REPO_ROOT_WS}")
+
+VOL_IPC     = f"/Volumes/{CATALOG}/{SCHEMA}/ipc"
+VOL_SCHEMES = f"/Volumes/{CATALOG}/{SCHEMA}/schemes"
+
+# COMMAND ----------
+
+# ==========================================================================
+# 1. CREATE CATALOG, SCHEMA, AND VOLUMES (idempotent)
+# ==========================================================================
+spark.sql(f"CREATE CATALOG IF NOT EXISTS {CATALOG}")
+spark.sql(f"CREATE SCHEMA  IF NOT EXISTS {CATALOG}.{SCHEMA}")
+spark.sql(f"CREATE VOLUME  IF NOT EXISTS {CATALOG}.{SCHEMA}.ipc")
+spark.sql(f"CREATE VOLUME  IF NOT EXISTS {CATALOG}.{SCHEMA}.schemes")
+print("✅ Catalog, schema, and volumes ready.")
+
+# COMMAND ----------
+
+# ==========================================================================
+# 2. COPY DATA FILES FROM REPO → VOLUMES
+# ==========================================================================
+import shutil
+
+FILES_TO_COPY = [
+    (f"{REPO_ROOT_WS}/bns_sections.csv",            f"{VOL_IPC}/bns_sections.csv"),
+    (f"{REPO_ROOT_WS}/250883_english_01042024.pdf", f"{VOL_IPC}/250883_english_01042024.pdf"),
+    (f"{REPO_ROOT_WS}/repealedfileopen.pdf",        f"{VOL_IPC}/repealedfileopen.pdf"),
+    (f"{REPO_ROOT_WS}/data.parquet",                f"{VOL_SCHEMES}/data.parquet"),
+]
+
+for src, dst in FILES_TO_COPY:
+    if os.path.exists(src):
+        shutil.copy2(src, dst)
+        print(f"✅ {os.path.basename(src)}  →  {dst}")
+    else:
+        print(f"⚠️  Missing source: {src}")
+
+# COMMAND ----------
+
+# ==========================================================================
+# 3. INGEST BNS — Bronze
+# ==========================================================================
+bns_df = (
+    spark.read.format("csv")
+    .option("header", "true")
+    .option("inferSchema", "true")
+    .load(f"{VOL_IPC}/bns_sections.csv")
+)
+for c in bns_df.columns:
+    bns_df = bns_df.withColumnRenamed(c, c.strip().replace(" ", "_"))
+
+bns_df.write.format("delta").mode("overwrite").saveAsTable(f"{CATALOG}.{SCHEMA}.bns_main")
+print("✅ BNS Main Table Created.")
+
+# COMMAND ----------
+
+# ==========================================================================
+# 4. INGEST IPC PDFs (main + repealed) — Bronze
+# ==========================================================================
+import pdfplumber
+
+def _pdf_to_text(path):
+    with pdfplumber.open(path) as pdf:
+        return "\n".join(p.extract_text() for p in pdf.pages if p.extract_text())
+
+ipc_text      = _pdf_to_text(f"{VOL_IPC}/250883_english_01042024.pdf")
+repealed_text = _pdf_to_text(f"{VOL_IPC}/repealedfileopen.pdf")
+
+(spark.createDataFrame([(ipc_text,)], ["raw_text"])
+ .write.format("delta").mode("overwrite")
+ .saveAsTable(f"{CATALOG}.{SCHEMA}.ipc_raw_text"))
+print("✅ IPC raw text saved.")
+
+(spark.createDataFrame([(repealed_text,)], ["repealed_context"])
+ .write.format("delta").mode("overwrite")
+ .saveAsTable(f"{CATALOG}.{SCHEMA}.ipc_repealed_reference"))
+print("✅ Repealed IPC raw text saved.")
+
+# COMMAND ----------
+
+# ==========================================================================
+# 5. PARSE IPC SECTIONS (UDF) — Silver / Gold
+# ==========================================================================
 import re
-from pyspark.sql.functions import udf, explode, concat_ws, col
+from pyspark.sql.functions import udf, explode, concat_ws, col, coalesce, lit
 from pyspark.sql.types import ArrayType, StructType, StructField, IntegerType, StringType
 
-# ==========================================
-# 1. DEFINE THE PARSING UDF FOR PDF TEXT
-# ==========================================
 def _parse_ipc(text_blob):
     pattern = re.compile(
         r'(?:^|\n)(?:Section\s+)?(\d{1,3}[A-Z]?)\.?\s+([^\n]{3,80})\n([\s\S]*?)(?=(?:\n(?:Section\s+)?\d{1,3}[A-Z]?\.?\s)|$)',
-        re.MULTILINE)
-    sections = []
-    
+        re.MULTILINE,
+    )
+    out = []
     if not text_blob:
-        return sections
-        
+        return out
     for m in pattern.finditer(text_blob):
         label = m.group(1).strip()
         name  = m.group(2).strip()
         desc  = m.group(3).strip()[:2000]
-        try: 
-            num = int(re.sub(r'[A-Z]','',label))
-        except: 
-            num = 0
-            
+        try:    num = int(re.sub(r'[A-Z]', '', label))
+        except: num = 0
         if desc and len(name) > 3:
-            # Combine name and description so the AI embeds the full context
-            full_content = f"Section {label} - {name}\n{desc}"
-            sections.append((num, label, name, full_content))
-    return sections
+            out.append((num, label, name, f"Section {label} - {name}\n{desc}"))
+    return out
 
-# Register the Python function as a Spark UDF
 schema = ArrayType(StructType([
-    StructField("section_num", IntegerType(), True),
-    StructField("section_label", StringType(), True),
-    StructField("section_name", StringType(), True),
-    StructField("content", StringType(), True)
+    StructField("section_num",   IntegerType()),
+    StructField("section_label", StringType()),
+    StructField("section_name",  StringType()),
+    StructField("content",       StringType()),
 ]))
 parse_ipc_udf = udf(_parse_ipc, schema)
 
-# ==========================================
-# 2. PROCESS MAIN IPC TABLE
-# ==========================================
-raw_ipc_df = spark.table("legal_catalog.nyaya_sahayak.ipc_raw_text")
-
-structured_ipc = raw_ipc_df.withColumn("parsed", parse_ipc_udf("raw_text")) \
-                           .select(explode("parsed").alias("section")) \
-                           .select("section.*")
-
-# Drop any existing table and create new Gold table with Change Data Feed enabled
-spark.sql("DROP TABLE IF EXISTS legal_catalog.nyaya_sahayak.ipc_gold")
-structured_ipc.write.format("delta") \
-    .option("delta.enableChangeDataFeed", "true") \
-    .mode("overwrite") \
-    .saveAsTable("legal_catalog.nyaya_sahayak.ipc_gold")
-
-print("✅ Structured IPC Gold Table Created!")
-
-# ==========================================
-# 3. PROCESS REPEALED IPC TABLE
-# ==========================================
-raw_repealed_df = spark.table("legal_catalog.nyaya_sahayak.ipc_repealed_reference")
-
-structured_repealed = raw_repealed_df.withColumn("parsed", parse_ipc_udf("repealed_context")) \
-                                     .select(explode("parsed").alias("section")) \
-                                     .select("section.*")
-
-# Drop any existing table and create new Gold table with Change Data Feed enabled
-spark.sql("DROP TABLE IF EXISTS legal_catalog.nyaya_sahayak.repealed_gold")
-structured_repealed.write.format("delta") \
-    .option("delta.enableChangeDataFeed", "true") \
-    .mode("overwrite") \
-    .saveAsTable("legal_catalog.nyaya_sahayak.repealed_gold")
-
-print("✅ Structured Repealed Gold Table Created!")
-
-# ==========================================
-# 4. PROCESS BNS TABLE (CORRECTED COLUMNS)
-# ==========================================
-from pyspark.sql.functions import concat_ws, col
-
-bns_df = spark.table("legal_catalog.nyaya_sahayak.bns_main")
-
-# We map exactly to the columns existing in your base table: 
-# 'Section__name', 'Section', 'Chapter_name', 'Description'
-bns_gold = bns_df.withColumn("content", 
-    concat_ws("\n", 
-              col("Chapter_name"), 
-              col("Section__name"), 
-              col("Description"))
+# IPC Gold
+raw_ipc = spark.table(f"{CATALOG}.{SCHEMA}.ipc_raw_text")
+ipc_gold = (
+    raw_ipc.withColumn("parsed", parse_ipc_udf("raw_text"))
+           .select(explode("parsed").alias("section"))
+           .select("section.*")
 )
+spark.sql(f"DROP TABLE IF EXISTS {CATALOG}.{SCHEMA}.ipc_gold")
+(ipc_gold.write.format("delta")
+ .option("delta.enableChangeDataFeed", "true")
+ .mode("overwrite")
+ .saveAsTable(f"{CATALOG}.{SCHEMA}.ipc_gold"))
+print(f"✅ ipc_gold created ({ipc_gold.count()} sections).")
 
-# Rename the 'Section' column to 'section_num' so the primary key matches across all 3 tables
-bns_gold = bns_gold.withColumnRenamed("Section", "section_num")
-
-# Select final columns to match the clean schema
-bns_gold = bns_gold.select("section_num", "Chapter_name", "Section__name", "content")
-
-# Drop any existing table and create new Gold table with Change Data Feed enabled
-spark.sql("DROP TABLE IF EXISTS legal_catalog.nyaya_sahayak.bns_gold")
-bns_gold.write.format("delta") \
-    .option("delta.enableChangeDataFeed", "true") \
-    .mode("overwrite") \
-    .saveAsTable("legal_catalog.nyaya_sahayak.bns_gold")
-
-print("✅ BNS Gold Table Created successfully!")
-
-print("🚀 All three Gold tables are fully structured and ready for Vector Indexing.")
-
+# Repealed Gold
+raw_rep = spark.table(f"{CATALOG}.{SCHEMA}.ipc_repealed_reference")
+rep_gold = (
+    raw_rep.withColumn("parsed", parse_ipc_udf("repealed_context"))
+           .select(explode("parsed").alias("section"))
+           .select("section.*")
+)
+spark.sql(f"DROP TABLE IF EXISTS {CATALOG}.{SCHEMA}.repealed_gold")
+(rep_gold.write.format("delta")
+ .option("delta.enableChangeDataFeed", "true")
+ .mode("overwrite")
+ .saveAsTable(f"{CATALOG}.{SCHEMA}.repealed_gold"))
+print(f"✅ repealed_gold created ({rep_gold.count()} sections).")
 
 # COMMAND ----------
 
-# ==========================================
-# 5. PROCESS SCHEMES TABLE (data.parquet)
-# ==========================================
-# Upload data.parquet to:
-#   /Volumes/legal_catalog/nyaya_sahayak/schemes/data.parquet
-# before running this cell.
+# ==========================================================================
+# 6. BNS GOLD
+# ==========================================================================
+bns_main = spark.table(f"{CATALOG}.{SCHEMA}.bns_main")
 
-from pyspark.sql.functions import concat_ws, col, coalesce, lit
-
-schemes_raw = spark.read.parquet(
-    "/Volumes/legal_catalog/nyaya_sahayak/schemes/data.parquet"
+bns_gold = (
+    bns_main.withColumn(
+        "content",
+        concat_ws("\n", col("Chapter_name"), col("Section__name"), col("Description")),
+    )
+    .withColumnRenamed("Section", "section_num")
+    .select("section_num", "Chapter_name", "Section__name", "content")
 )
+spark.sql(f"DROP TABLE IF EXISTS {CATALOG}.{SCHEMA}.bns_gold")
+(bns_gold.write.format("delta")
+ .option("delta.enableChangeDataFeed", "true")
+ .mode("overwrite")
+ .saveAsTable(f"{CATALOG}.{SCHEMA}.bns_gold"))
+print(f"✅ bns_gold created ({bns_gold.count()} sections).")
 
-# Drop junk column if present
+# COMMAND ----------
+
+# ==========================================================================
+# 7. SCHEMES GOLD (3,400+ government schemes)
+# ==========================================================================
+schemes_raw = spark.read.parquet(f"{VOL_SCHEMES}/data.parquet")
 if "Unnamed: 9" in schemes_raw.columns:
     schemes_raw = schemes_raw.drop("Unnamed: 9")
 
-# Build a rich content column for vector embedding:
-# scheme_name + eligibility + benefits + category + tags
-schemes_gold = schemes_raw.withColumn(
-    "content",
-    concat_ws(
-        "\n",
-        coalesce(col("scheme_name"), lit("")),
-        coalesce(col("eligibility"),  lit("")),
-        coalesce(col("benefits"),     lit("")),
-        coalesce(col("schemeCategory"), lit("")),
-        coalesce(col("tags"),         lit("")),
+schemes_gold = (
+    schemes_raw
+    .withColumn(
+        "content",
+        concat_ws(
+            "\n",
+            coalesce(col("scheme_name"),    lit("")),
+            coalesce(col("eligibility"),    lit("")),
+            coalesce(col("benefits"),       lit("")),
+            coalesce(col("schemeCategory"), lit("")),
+            coalesce(col("tags"),           lit("")),
+        ),
     )
-).select(
-    "scheme_name",
-    "slug",
-    "benefits",
-    "eligibility",
-    "application",
-    "schemeCategory",
-    "level",
-    "tags",
-    "content",      # ← embedded by vector search
+    .select("scheme_name", "slug", "benefits", "eligibility", "application",
+            "schemeCategory", "level", "tags", "content")
 )
+spark.sql(f"DROP TABLE IF EXISTS {CATALOG}.{SCHEMA}.schemes_gold")
+(schemes_gold.write.format("delta")
+ .option("delta.enableChangeDataFeed", "true")
+ .mode("overwrite")
+ .saveAsTable(f"{CATALOG}.{SCHEMA}.schemes_gold"))
+print(f"✅ schemes_gold created ({schemes_gold.count()} schemes).")
 
-spark.sql("DROP TABLE IF EXISTS legal_catalog.nyaya_sahayak.schemes_gold")
-schemes_gold.write.format("delta") \
-    .option("delta.enableChangeDataFeed", "true") \
-    .mode("overwrite") \
-    .saveAsTable("legal_catalog.nyaya_sahayak.schemes_gold")
+# COMMAND ----------
 
-print(f"✅ Schemes Gold Table Created! ({schemes_gold.count()} schemes)")
-print("🚀 Now create a Mosaic AI Vector Search index on 'content' column via the Databricks UI or SDK.")
+# ==========================================================================
+# 8. CREATE VECTOR SEARCH ENDPOINT (waits for it to be ready)
+# ==========================================================================
+from databricks.vector_search.client import VectorSearchClient
+
+vs = VectorSearchClient(disable_notice=True)
+
+try:
+    vs.create_endpoint(name=ENDPOINT, endpoint_type="STANDARD")
+    print(f"✅ Endpoint '{ENDPOINT}' creation requested.")
+except Exception as e:
+    print(f"ℹ️  Endpoint exists or already provisioning: {e}")
+
+print("⏳ Waiting for endpoint to become online (this can take 5-10 minutes on first run)...")
+vs.wait_for_endpoint(name=ENDPOINT, timeout=900, verbose=True)
+print(f"✅ Endpoint '{ENDPOINT}' is ONLINE.")
+
+# COMMAND ----------
+
+# ==========================================================================
+# 9. CREATE THREE VECTOR SEARCH INDEXES (Delta Sync, auto-managed embeddings)
+# ==========================================================================
+INDEX_SPECS = [
+    {
+        "index": f"{CATALOG}.{SCHEMA}.bns_gold_index",
+        "table": f"{CATALOG}.{SCHEMA}.bns_gold",
+        "pk":    "section_num",
+    },
+    {
+        "index": f"{CATALOG}.{SCHEMA}.ipc_gold_index",
+        "table": f"{CATALOG}.{SCHEMA}.ipc_gold",
+        "pk":    "section_num",
+    },
+    {
+        "index": f"{CATALOG}.{SCHEMA}.schemes_gold_index",
+        "table": f"{CATALOG}.{SCHEMA}.schemes_gold",
+        "pk":    "slug",
+    },
+]
+
+# IPC table needs a primary key — make sure it's there. We add a synthetic one if not.
+try:
+    spark.sql(f"ALTER TABLE {CATALOG}.{SCHEMA}.bns_gold ALTER COLUMN section_num SET NOT NULL")
+    spark.sql(f"ALTER TABLE {CATALOG}.{SCHEMA}.bns_gold ADD CONSTRAINT bns_pk PRIMARY KEY (section_num)")
+except Exception as e:
+    print(f"ℹ️  bns_gold PK: {e}")
+
+try:
+    spark.sql(f"ALTER TABLE {CATALOG}.{SCHEMA}.ipc_gold ALTER COLUMN section_num SET NOT NULL")
+    spark.sql(f"ALTER TABLE {CATALOG}.{SCHEMA}.ipc_gold ADD CONSTRAINT ipc_pk PRIMARY KEY (section_num)")
+except Exception as e:
+    print(f"ℹ️  ipc_gold PK: {e}")
+
+try:
+    spark.sql(f"ALTER TABLE {CATALOG}.{SCHEMA}.schemes_gold ALTER COLUMN slug SET NOT NULL")
+    spark.sql(f"ALTER TABLE {CATALOG}.{SCHEMA}.schemes_gold ADD CONSTRAINT schemes_pk PRIMARY KEY (slug)")
+except Exception as e:
+    print(f"ℹ️  schemes_gold PK: {e}")
+
+# Now create / sync indexes
+for spec in INDEX_SPECS:
+    try:
+        vs.create_delta_sync_index(
+            endpoint_name=ENDPOINT,
+            index_name=spec["index"],
+            source_table_name=spec["table"],
+            pipeline_type="TRIGGERED",
+            primary_key=spec["pk"],
+            embedding_source_column="content",
+            embedding_model_endpoint_name="databricks-bge-large-en",
+        )
+        print(f"✅ Created index: {spec['index']}")
+    except Exception as e:
+        # Already exists — trigger a sync instead
+        try:
+            vs.get_index(endpoint_name=ENDPOINT, index_name=spec["index"]).sync()
+            print(f"♻️  Re-synced existing index: {spec['index']}")
+        except Exception as e2:
+            print(f"⚠️  {spec['index']}: {e2}")
+
+print("\n🚀 SETUP COMPLETE. Vector indexes will finish syncing in the background.")
+print("   Now go to Compute → Apps → Create App and connect this repo.")
