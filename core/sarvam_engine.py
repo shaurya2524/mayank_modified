@@ -52,14 +52,12 @@ SYSTEM_PROMPT_HI = """आप न्याय-सहायक हैं, एक �
 
 def _get_client() -> OpenAI:
     """Return an OpenAI-compatible client pointed at Sarvam-M."""
-    api_key  = "sk_bey0cyc7_qV5jUMSHl51Oa5EiH55Nvxe8"
-    base_url = "https://api.sarvam.ai/v1"
-    model    = "sarvam-m"
-
-    # store resolved model so chat() can use it
-    _get_client.model = model
-
-    return OpenAI(api_key=api_key, base_url=base_url, timeout=120.0)
+    _get_client.model = LLM_MODEL
+    return OpenAI(
+        api_key=LLM_API_KEY,
+        base_url=LLM_BASE_URL,
+        timeout=120.0,
+    )
 
 _get_client.model = LLM_MODEL
 
