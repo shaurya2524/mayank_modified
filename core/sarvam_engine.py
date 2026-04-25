@@ -51,13 +51,32 @@ SYSTEM_PROMPT_HI = """आप न्याय-सहायक हैं, एक �
 # ── Client Factory ──────────────────────────────────────────────────────────────
 
 def _get_client() -> OpenAI:
-    """Return an OpenAI-compatible client pointed at Sarvam-M."""
-    _get_client.model = LLM_MODEL
-    return OpenAI(
-        api_key=LLM_API_KEY,
-        base_url=LLM_BASE_URL,
-        timeout=120.0,
-    )
+    """Return an OpenAI-compatible client: Databricks > Sarvam > HuggingFace."""
+    from dotenv import load_dotenv
+    load_dotenv(Path(__file__).parent.parent / ".env", override=False)
+
+    databricks_host  = os.environ.get("DATABRICKS_HOST", "").rstrip("/")
+    databricks_token = os.environ.get("DATABRICKS_TOKEN", "")
+    sarvam_key       = "sk_b9xcezjh_xyzTpHUTifcZYKwB65cyqC55"
+    hf_token         = os.environ.get("HF_TOKEN", "")
+
+    if databricks_host and databricks_token:
+        api_key  = databricks_token
+        base_url = f"{databricks_host}/serving-endpoints"
+        model    = os.environ.get("LLM_MODEL", "databricks-llama-4-maverick")
+    elif sarvam_key:
+        api_key  = sarvam_key
+        base_url = os.environ.get("SARVAM_API_BASE", "https://api.sarvam.ai/v1")
+        model    = "sarvam-m"
+    else:
+        api_key  = hf_token
+        base_url = os.environ.get("HF_BASE_URL", "https://api-inference.huggingface.co/v1")
+        model    = "sarvamai/sarvam-m"
+
+    # store resolved model so chat() can use it
+    _get_client.model = model
+
+    return OpenAI(api_key=api_key, base_url=base_url, timeout=120.0)
 
 _get_client.model = LLM_MODEL
 
