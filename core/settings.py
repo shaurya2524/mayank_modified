@@ -22,11 +22,8 @@ SARVAM_API_BASE  = os.getenv("SARVAM_API_BASE", "https://api.sarvam.ai/v1")
 
 # Decide which endpoint to use
 LLM_BASE_URL = "https://api.sarvam.ai/v1"
-LLM_API_KEY  = os.getenv("sarvam_api_key")
+LLM_API_KEY  = os.getenv("sarvam_api_key", "sk_bey0cyc7_qV5jUMSHl51Oa5EiH55Nvxe8")
 LLM_MODEL    = "sarvam-m"
-
-if not LLM_API_KEY:
-    raise ValueError("sarvam_api_key is not set. Check Databricks secrets.")
 
 print("API KEY LOADED:", bool(LLM_API_KEY))
 print(f"[Config] LLM endpoint: {LLM_BASE_URL} | Model: {LLM_MODEL}")
