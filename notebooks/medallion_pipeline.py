@@ -28,8 +28,7 @@ print("Sarvam key visible to notebook env:", bool(os.environ.get("sarvam_api_key
 
 # COMMAND ----------
 
-# MAGIC %pip install pdfplumber databricks-vectorsearch
-# MAGIC %restart_python
+# MAGIC %pip install pdfplumber databricks-vectorsearch --quiet
 
 # COMMAND ----------
 
