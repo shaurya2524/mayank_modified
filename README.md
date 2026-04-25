@@ -218,45 +218,114 @@ If only `SARVAM_API_KEY` is set, the app falls back to local indexes — chatbot
 
 ---
 
-## ☁️ Deployment
+## ☁️ Deployment — Databricks Apps (Primary Target)
 
-### Option 1: Databricks Apps (Production)
+This project is **built for Databricks**. The full feature set — Mosaic AI Vector Search, Delta Lake medallion pipeline, Change Data Feed auto-sync, serverless app hosting — only comes alive on the Databricks platform.
 
-1. **Upload data files to a Volume:**
-   ```
-   /Volumes/legal_catalog/nyaya_sahayak/ipc/250883_english_01042024.pdf
-   /Volumes/legal_catalog/nyaya_sahayak/ipc/repealedfileopen.pdf
-   /Volumes/legal_catalog/nyaya_sahayak/ipc/bns_sections.csv
-   /Volumes/legal_catalog/nyaya_sahayak/schemes/data.parquet
-   ```
+### Step 1 — Clone the repo into your Databricks workspace
 
-2. **Run** `notebooks/medallion_pipeline.py` to create Delta tables:
-   - `bns_gold` · `ipc_gold` · `repealed_gold` · `schemes_gold`
+In Databricks: **Workspace → Repos → Add Repo**
 
-3. **Create Vector Search indexes** on the `nyaya_sahayak_endpoint`:
-   - `bns_gold_index` (index `content` column)
-   - `ipc_gold_index`
-   - `schemes_gold_index`
+```
+https://github.com/shaurya2524/mayank_modified
+Branch: main
+```
 
-4. **Deploy as a Databricks App:**
-   - Compute → Apps → Create App
-   - Connect this GitHub repo, branch `main`
-   - The `app.yaml` injects `SARVAM_API_KEY` from Databricks Secrets
+### Step 2 — Upload the source data to a Unity Catalog Volume
 
-### Option 2: Streamlit Cloud (Lite)
+Create the catalog & volume if they don't exist:
 
-For lightweight demo / preview deployments where Databricks isn't available, use the slimmer dependency set:
+```sql
+CREATE CATALOG IF NOT EXISTS legal_catalog;
+CREATE SCHEMA  IF NOT EXISTS legal_catalog.nyaya_sahayak;
+CREATE VOLUME  IF NOT EXISTS legal_catalog.nyaya_sahayak.ipc;
+CREATE VOLUME  IF NOT EXISTS legal_catalog.nyaya_sahayak.schemes;
+```
 
-1. Sign in at [share.streamlit.io](https://share.streamlit.io)
-2. Connect this repo, main file `app.py`
-3. **Set the requirements file to `requirements_streamlit_lite.txt`** (Advanced settings)
-4. Add secrets via the dashboard:
-   ```toml
-   SARVAM_API_KEY = "your_key"
-   HF_TOKEN = "optional_fallback"
-   ```
+Then upload (via the Catalog UI → Volumes → Upload file):
 
-App auto-falls-back to local indexes (parquet/CSV) since Streamlit Cloud has no Databricks access. All 6 tools still work — just keyword search instead of Mosaic AI semantic search.
+```
+/Volumes/legal_catalog/nyaya_sahayak/ipc/
+   ├── 250883_english_01042024.pdf
+   ├── repealedfileopen.pdf
+   └── bns_sections.csv
+
+/Volumes/legal_catalog/nyaya_sahayak/schemes/
+   └── data.parquet
+```
+
+### Step 3 — Run the medallion pipeline notebook
+
+Open `notebooks/medallion_pipeline.py` in your workspace → **Run All**.
+
+This creates four Gold-layer Delta tables with Change Data Feed enabled:
+
+| Table | Source | Purpose |
+|-------|--------|---------|
+| `legal_catalog.nyaya_sahayak.bns_gold` | `bns_sections.csv` | All 358 BNS sections |
+| `legal_catalog.nyaya_sahayak.ipc_gold` | `250883_english_01042024.pdf` | Parsed IPC sections |
+| `legal_catalog.nyaya_sahayak.repealed_gold` | `repealedfileopen.pdf` | Repealed IPC reference |
+| `legal_catalog.nyaya_sahayak.schemes_gold` | `data.parquet` | 3,400+ government schemes |
+
+### Step 4 — Create Mosaic AI Vector Search indexes
+
+In Databricks: **Compute → Vector Search → Create Endpoint**
+
+```
+Endpoint name: nyaya_sahayak_endpoint
+```
+
+Then create three Delta-Sync indexes on this endpoint (Catalog → Table → Create Index):
+
+| Index name | Source table | Indexed column |
+|------------|--------------|----------------|
+| `bns_gold_index` | `bns_gold` | `content` |
+| `ipc_gold_index` | `ipc_gold` | `content` |
+| `schemes_gold_index` | `schemes_gold` | `content` |
+
+These auto-sync forever via CDF.
+
+### Step 5 — Store the Sarvam API key as a Databricks Secret
+
+```python
+# In a notebook cell
+dbutils.secrets.put(scope="nyaya", key="sarvam_api_key", string_value="sk_...")
+```
+
+(Or use the Databricks CLI / REST API.)
+
+Then update `app.yaml` to reference it instead of inline:
+
+```yaml
+command: ["streamlit", "run", "app.py"]
+env:
+  - name: SARVAM_API_KEY
+    valueFrom: nyaya/sarvam_api_key
+```
+
+### Step 6 — Deploy as a Databricks App
+
+1. **Compute → Apps → Create App**
+2. App name: `nyaya-sahayak`
+3. Source: **GitHub repo** → connect `shaurya2524/mayank_modified` (branch `main`)
+4. The repo's `app.yaml` is auto-detected — Databricks reads `command:` and `env:` from it
+5. Click **Deploy**
+
+App goes live at:
+```
+https://nyaya-sahayak-<workspace-id>.<region>.databricksapps.com
+```
+
+### What the app does at runtime on Databricks
+
+- `core/legal_retriever.py` connects to `nyaya_sahayak_endpoint` via `VectorSearchClient()` — no token needed inside Databricks Apps, the app inherits workspace identity
+- Hybrid search runs: 70% Mosaic AI semantic + 30% local keyword
+- `core/welfare_matcher.py` queries `schemes_gold_index` for scheme matching
+- All chat / FIR / bail / case study tools route through Sarvam-M
+
+### Optional: Streamlit Cloud preview deployment
+
+For a quick demo without spinning up Databricks, see `requirements_streamlit_lite.txt`. Connect the repo at [share.streamlit.io](https://share.streamlit.io), set the requirements file to `requirements_streamlit_lite.txt`, add `SARVAM_API_KEY` to secrets. The app auto-falls-back to local CSV/parquet indexes — all 6 tools still work, just without Mosaic AI semantic ranking.
 
 ---
 
