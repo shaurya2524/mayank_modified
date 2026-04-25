@@ -7,10 +7,9 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Load .env — try both the file's parent directory and CWD
+# Load .env from project root
 ROOT = Path(__file__).parent.parent
-load_dotenv(ROOT / ".env", override=True)
-load_dotenv(Path.cwd() / ".env", override=True)
+load_dotenv(ROOT / ".env")
 
 # ── LLM Configuration ──────────────────────────────────────────────────────────
 HF_TOKEN         = os.getenv("HF_TOKEN", "")
@@ -18,14 +17,19 @@ HF_BASE_URL      = os.getenv("HF_BASE_URL", "https://api-inference.huggingface.c
 SARVAM_MODEL     = os.getenv("SARVAM_MODEL", "sarvamai/sarvam-m")
 
 # Optional direct Sarvam API (faster)
-SARVAM_API_KEY   = os.getenv("SARVAM_API_KEY", "")
+sarvam_api_key   = os.getenv("sarvam_api_key", "")
 SARVAM_API_BASE  = os.getenv("SARVAM_API_BASE", "https://api.sarvam.ai/v1")
 
 # Decide which endpoint to use
-USE_SARVAM_DIRECT = bool(SARVAM_API_KEY)
-LLM_BASE_URL = SARVAM_API_BASE if USE_SARVAM_DIRECT else HF_BASE_URL
-LLM_API_KEY  = SARVAM_API_KEY  if USE_SARVAM_DIRECT else HF_TOKEN
-LLM_MODEL    = "sarvam-m"      if USE_SARVAM_DIRECT else SARVAM_MODEL
+LLM_BASE_URL = "https://api.sarvam.ai/v1"
+LLM_API_KEY  = os.getenv("sarvam_api_key")
+LLM_MODEL    = "sarvam-m"
+
+if not LLM_API_KEY:
+    raise ValueError("sarvam_api_key is not set. Check Databricks secrets.")
+
+print("API KEY LOADED:", bool(LLM_API_KEY))
+print(f"[Config] LLM endpoint: {LLM_BASE_URL} | Model: {LLM_MODEL}")
 
 # ── Data Paths ──────────────────────────────────────────────────────────────────
 BNS_CSV_PATH          = Path(os.getenv("BNS_CSV_PATH",          ROOT / "bns_sections.csv"))
