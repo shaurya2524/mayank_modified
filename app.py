@@ -518,6 +518,12 @@ with tab1:
                             cache.store(user_q, answer)
 
                 except Exception as e:
+                    print(
+                        "[App Debug] chat_query_failed "
+                        f"error_type={type(e).__name__} "
+                        f"language={st.session_state.get('chat_lang', 'auto')} "
+                        f"query={user_q!r} detail={e}"
+                    )
                     answer = f"⚠️ Error: {e}\n\nPlease check your API token and network connection."
 
             # Update memory
