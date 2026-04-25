@@ -413,15 +413,15 @@ with tab1:
         with lc1:
             if st.button("🇬🇧  English", use_container_width=True):
                 st.session_state.chat_lang = "en"
-                st.rerun()
+                
         with lc2:
             if st.button("🇮🇳  हिंदी", use_container_width=True):
                 st.session_state.chat_lang = "hi"
-                st.rerun()
+                
         with lc3:
             if st.button("🌐  Auto-detect", use_container_width=True):
                 st.session_state.chat_lang = "auto"
-                st.rerun()
+                
 
     if st.session_state.chat_lang is not None:
         # Show selected language + option to change
@@ -436,7 +436,7 @@ with tab1:
                 st.session_state.chat_summary = ""
                 st.session_state.recent_turns = []
                 st.session_state.turn_count = 0
-                st.rerun()
+                
 
         if "chat_history" not in st.session_state:
             st.session_state.chat_history = []
@@ -535,14 +535,14 @@ with tab1:
                 st.session_state.recent_turns = st.session_state.recent_turns[-4:]
 
             st.session_state.chat_history.append(("bot", answer))
-            st.rerun()
+            
 
         if st.button("🗑️ Clear Chat"):
             st.session_state.chat_history = []
             st.session_state.chat_summary = ""
             st.session_state.recent_turns = []
             st.session_state.turn_count = 0
-            st.rerun()
+            
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # TAB 2 — IPC vs BNS COMPARISON
@@ -903,7 +903,7 @@ with tab3:
         with pc1:
             if st.button("← Previous", key="mig_prev", disabled=st.session_state.mig_page == 0, use_container_width=True):
                 st.session_state.mig_page -= 1
-                st.rerun()
+                
         with pc2:
             st.markdown(
                 f'<div style="text-align:center; color:#ec4899; font-size:.82rem; letter-spacing:1.5px; '
@@ -915,7 +915,7 @@ with tab3:
         with pc3:
             if st.button("Next →", key="mig_next", disabled=st.session_state.mig_page >= total_pages - 1, use_container_width=True):
                 st.session_state.mig_page += 1
-                st.rerun()
+                
 
     except Exception as e:
         st.warning(f"Could not load mapping table: {e}")
@@ -1099,7 +1099,7 @@ with tab4:
             else:
                 st.session_state.sc_done = True
                 st.session_state.sc_history.append(("bot", "Thanks! Finding your matching schemes now..."))
-            st.rerun()
+            
 
     # Run scheme search once all answers collected
     if st.session_state.sc_done and st.session_state.sc_result is None:
@@ -1199,7 +1199,7 @@ with tab4:
         if st.button("Start Over", key="scheme_restart"):
             for k in ["sc_history","sc_q_idx","sc_answers","sc_done","sc_result","scheme_profile","scheme_matched"]:
                 st.session_state.pop(k, None)
-            st.rerun()
+            
 
 with tab5:
     st.markdown("""
