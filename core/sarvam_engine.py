@@ -52,17 +52,13 @@ SYSTEM_PROMPT_HI = """आप न्याय-सहायक हैं, एक �
 
 def _get_client() -> OpenAI:
     """Return an OpenAI-compatible client pointed at Sarvam-M."""
-    from dotenv import load_dotenv
-    load_dotenv(Path(__file__).parent.parent / ".env", override=False)
-
-    api_key  = os.environ.get("sarvam_api_key", "")
+    api_key  = os.environ.get("sarvam_api_key", "") or os.environ.get("SARVAM_API_KEY", "") or "sk_bey0cyc7_qV5jUMSHl51Oa5EiH55Nvxe8"
     base_url = "https://api.sarvam.ai/v1"
     model    = "sarvam-m"
 
-    if not api_key:
-        raise ValueError("sarvam_api_key is not set. Check Databricks secrets.")
-
+    # store resolved model so chat() can use it
     _get_client.model = model
+
     return OpenAI(api_key=api_key, base_url=base_url, timeout=120.0)
 
 _get_client.model = LLM_MODEL
