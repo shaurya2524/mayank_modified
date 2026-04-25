@@ -10,7 +10,7 @@ from typing import Optional
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from nyaya_sahayak.config import (
+from core.settings import (
     BNS_CSV_PATH, IPC_PDF_PATH, IPC_REPEALED_PDF_PATH, ROOT
 )
 

@@ -11,7 +11,7 @@ from typing import Optional
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from nyaya_sahayak.config import (
+from core.settings import (
     BNS_CSV_PATH, BNS_INDEX_PATH, IPC_INDEX_PATH, ROOT,
     LLM_MODEL, LLM_API_KEY, LLM_BASE_URL
 )
@@ -368,7 +368,7 @@ class NyayaRAGEngine:
           2. Fetch top_k results from each selected index
           3. Answer LLM generates final response with labeled context + conversation memory
         """
-        from nyaya_sahayak.llm_client import route_query, answer_with_context
+        from core.sarvam_engine import route_query, answer_with_context
 
         tool = route_query(question)
         print(f"[Agentic] Router selected: {tool}")

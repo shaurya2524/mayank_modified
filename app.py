@@ -365,22 +365,22 @@ st.markdown("<hr>", unsafe_allow_html=True)
 # ── Lazy-load heavy modules ─────────────────────────────────────────────────────
 @st.cache_resource(show_spinner="⚙️ Initializing Nyaya-Sahayak engine…")
 def load_engine():
-    from nyaya_sahayak.rag_engine import get_engine
+    from core.legal_retriever import get_engine
     return get_engine()
 
 @st.cache_resource(show_spinner="Loading comparison engine…")
 def load_comparator():
-    from nyaya_sahayak.comparator import get_comparator
+    from core.law_diff import get_comparator
     return get_comparator()
 
 @st.cache_resource(show_spinner="Loading cache…")
 def load_cache():
-    from nyaya_sahayak.cache import QueryCache
+    from core.query_memory import QueryCache
     return QueryCache()
 
 @st.cache_resource(show_spinner="Loading scheme database…")
 def load_checker():
-    from nyaya_sahayak.scheme_checker import get_checker
+    from core.welfare_matcher import get_checker
     return get_checker()
 
 # ── Tabs ─────────────────────────────────────────────────────────────────────────
@@ -527,7 +527,7 @@ with tab1:
 
             # Compress every 4 turns
             if st.session_state.turn_count % 4 == 0:
-                from nyaya_sahayak.llm_client import summarize_conversation
+                from core.sarvam_engine import summarize_conversation
                 st.session_state.chat_summary = summarize_conversation(
                     st.session_state.chat_summary,
                     st.session_state.recent_turns,
@@ -550,8 +550,8 @@ with tab1:
 with tab2:
     st.markdown("""
     <div class="card">
-      <h4>⚖️ Scenario-based IPC vs BNS Comparison</h4>
-      <p>Describe a legal scenario and get a side-by-side comparison of old IPC and new BNS provisions.</p>
+      <h4>⊜ Case Study Analyser — IPC vs BNS</h4>
+      <p>Describe a legal scenario or pick a case study. Get a visual migration diagram with side-by-side analysis.</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -568,7 +568,7 @@ with tab2:
     if q_pick != "—":
         scenario = q_pick.split(" / ")[0]
 
-    if st.button("🔍 Compare IPC vs BNS", key="cmp_btn"):
+    if st.button("⊜ Analyse Case Study", key="cmp_btn"):
         if not scenario.strip():
             st.warning("Please enter a scenario.")
         else:
@@ -584,34 +584,238 @@ with tab2:
                 bns_r = result["bns_results"]
                 ipc_r = result["ipc_results"]
 
-                c_bns, c_ipc = st.columns(2)
-                with c_bns:
-                    st.markdown('<span class="tag-bns">✅ BNS 2023</span>', unsafe_allow_html=True)
-                    if bns_r:
-                        for r in bns_r:
-                            st.markdown(f"""
-                            <div class="card">
-                              <h4>{r.get('title','BNS Section')}</h4>
-                              <p>{r.get('text','')[:400]}</p>
-                            </div>""", unsafe_allow_html=True)
-                    else:
-                        st.info("No specific BNS sections found via index.")
+                # ── Migration Flow Diagram (SVG) ──────────────────────────────────
+                # Build IPC and BNS node lists
+                def _section_num(r):
+                    title = str(r.get("title",""))
+                    import re as _re
+                    m = _re.search(r"(\d{1,3}[A-Z]?)", title)
+                    return m.group(1) if m else "?"
 
-                with c_ipc:
-                    st.markdown('<span class="tag-ipc">📜 IPC 1860</span>', unsafe_allow_html=True)
-                    if ipc_r:
-                        for r in ipc_r:
-                            st.markdown(f"""
-                            <div class="card">
-                              <h4>{r.get('title','IPC Section')}</h4>
-                              <p>{r.get('text','')[:400]}</p>
-                            </div>""", unsafe_allow_html=True)
-                    else:
-                        st.info("IPC index not yet built. Run pipeline to extract IPC text.")
+                def _short_name(r):
+                    title = str(r.get("title",""))
+                    parts = title.split("—") if "—" in title else title.split("-")
+                    return (parts[-1] if len(parts) > 1 else title).strip()[:35]
+
+                ipc_nodes = [(_section_num(r), _short_name(r)) for r in (ipc_r or [])][:3]
+                bns_nodes = [(_section_num(r), _short_name(r)) for r in (bns_r or [])][:3]
+
+                # Pad with placeholders if empty
+                while len(ipc_nodes) < 3: ipc_nodes.append(("—", "—"))
+                while len(bns_nodes) < 3: bns_nodes.append(("—", "—"))
+
+                # Build SVG nodes and connections
+                svg_height = 320
+                left_x  = 90
+                right_x = 540
+                node_w  = 170
+                node_h  = 60
+                gap     = 30
+                start_y = 30
+
+                ipc_svg = ""
+                bns_svg = ""
+                lines_svg = ""
+
+                for i, (sec, name) in enumerate(ipc_nodes):
+                    y = start_y + i * (node_h + gap)
+                    ipc_svg += f"""
+                    <rect x="{left_x}" y="{y}" width="{node_w}" height="{node_h}" rx="2"
+                          fill="rgba(136,136,136,0.06)" stroke="#555" stroke-width="1"/>
+                    <text x="{left_x + 12}" y="{y + 22}" fill="#888" font-size="10"
+                          font-weight="700" letter-spacing="1px" font-family="Inter, sans-serif">IPC § {sec}</text>
+                    <text x="{left_x + 12}" y="{y + 44}" fill="#bbb" font-size="11"
+                          font-family="Inter, sans-serif">{name}</text>
+                    """
+
+                for i, (sec, name) in enumerate(bns_nodes):
+                    y = start_y + i * (node_h + gap)
+                    bns_svg += f"""
+                    <rect x="{right_x}" y="{y}" width="{node_w}" height="{node_h}" rx="2"
+                          fill="rgba(212,175,55,0.08)" stroke="#d4af37" stroke-width="1.5"/>
+                    <text x="{right_x + 12}" y="{y + 22}" fill="#d4af37" font-size="10"
+                          font-weight="700" letter-spacing="1px" font-family="Inter, sans-serif">BNS § {sec}</text>
+                    <text x="{right_x + 12}" y="{y + 44}" fill="#e8e0d0" font-size="11"
+                          font-family="Inter, sans-serif">{name}</text>
+                    """
+
+                # Draw connecting curves (each IPC connects to corresponding BNS)
+                for i in range(min(len(ipc_nodes), len(bns_nodes))):
+                    y_left  = start_y + i * (node_h + gap) + node_h // 2
+                    y_right = start_y + i * (node_h + gap) + node_h // 2
+                    mid_x   = (left_x + node_w + right_x) // 2
+                    lines_svg += f"""
+                    <path d="M {left_x + node_w} {y_left} C {mid_x} {y_left}, {mid_x} {y_right}, {right_x} {y_right}"
+                          stroke="#d4af37" stroke-width="1.2" fill="none" opacity="0.5"
+                          stroke-dasharray="4,4">
+                      <animate attributeName="stroke-dashoffset" from="0" to="-16"
+                               dur="1.2s" repeatCount="indefinite"/>
+                    </path>
+                    <circle r="3" fill="#d4af37">
+                      <animateMotion dur="2s" repeatCount="indefinite"
+                                     path="M {left_x + node_w} {y_left} C {mid_x} {y_left}, {mid_x} {y_right}, {right_x} {y_right}"/>
+                    </circle>
+                    """
+
+                # Section text content for cards below diagram
+                bns_cards_html = ""
+                for r in (bns_r or [])[:3]:
+                    bns_cards_html += f"""
+                    <div class="sec-card bns">
+                      <div class="sec-tag bns-tag">BNS · NEW LAW</div>
+                      <div class="sec-title">{r.get('title','BNS Section')}</div>
+                      <div class="sec-text">{r.get('text','')[:400]}{'…' if len(r.get('text','')) > 400 else ''}</div>
+                    </div>"""
+
+                ipc_cards_html = ""
+                for r in (ipc_r or [])[:3]:
+                    ipc_cards_html += f"""
+                    <div class="sec-card ipc">
+                      <div class="sec-tag ipc-tag">IPC · OLD LAW</div>
+                      <div class="sec-title">{r.get('title','IPC Section')}</div>
+                      <div class="sec-text">{r.get('text','')[:400]}{'…' if len(r.get('text','')) > 400 else ''}</div>
+                    </div>"""
+
+                # Stat counts
+                bns_count = len([r for r in (bns_r or []) if r])
+                ipc_count = len([r for r in (ipc_r or []) if r])
+                shared_count = min(bns_count, ipc_count)
+
+                st.components.v1.html(f"""<!DOCTYPE html><html><head>
+                <style>
+                @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
+                *{{box-sizing:border-box;margin:0;padding:0;}}
+                body{{background:#0a0a0a;font-family:'Inter',sans-serif;padding:8px;color:#e8e0d0;}}
+
+                .scenario-banner {{
+                    background: linear-gradient(180deg, #111 0%, #0a0a0a 100%);
+                    border: 1px solid #2a2a2a; border-left: 3px solid #d4af37;
+                    padding: 14px 20px; margin-bottom: 18px;
+                }}
+                .scenario-banner .label {{
+                    font-size: 10px; color:#888; letter-spacing: 2px;
+                    text-transform: uppercase; font-weight: 700; margin-bottom: 4px;
+                }}
+                .scenario-banner .text {{ color:#e8e0d0; font-size: 14px; }}
+
+                .stats-row {{
+                    display: grid; grid-template-columns: repeat(3, 1fr);
+                    gap: 10px; margin-bottom: 18px;
+                }}
+                .stat {{
+                    background: #111; border: 1px solid #2a2a2a; padding: 12px 14px;
+                    text-align: center;
+                }}
+                .stat .num {{
+                    font-family:'Cormorant Garamond',serif; font-size: 1.8rem;
+                    font-weight: 700; color: #d4af37; line-height: 1;
+                }}
+                .stat .lab {{
+                    font-size: 9px; color: #666; text-transform: uppercase;
+                    letter-spacing: 1.2px; font-weight: 600; margin-top: 4px;
+                }}
+
+                .diagram-box {{
+                    background: #0d0d0d; border: 1px solid #2a2a2a;
+                    padding: 20px; margin-bottom: 18px;
+                }}
+                .diagram-title {{
+                    text-align: center; color: #d4af37;
+                    font-family: 'Cormorant Garamond', serif;
+                    font-size: 18px; font-weight: 700;
+                    letter-spacing: 1px; margin-bottom: 12px;
+                }}
+                .diagram-sub {{
+                    text-align: center; color: #555; font-size: 10px;
+                    text-transform: uppercase; letter-spacing: 2px;
+                    margin-bottom: 18px;
+                }}
+                .header-labels {{
+                    display: flex; justify-content: space-around;
+                    color: #888; font-size: 10px; font-weight: 700;
+                    text-transform: uppercase; letter-spacing: 1.5px;
+                    margin-bottom: 8px;
+                }}
+                .header-labels .ipc-h {{ color: #888; }}
+                .header-labels .bns-h {{ color: #d4af37; }}
+
+                .cards-grid {{
+                    display: grid; grid-template-columns: 1fr 1fr;
+                    gap: 14px; margin-top: 8px;
+                }}
+                .sec-card {{
+                    background: #111; border: 1px solid #2a2a2a; padding: 14px 16px;
+                }}
+                .sec-card.ipc {{ border-left: 3px solid #555; }}
+                .sec-card.bns {{ border-left: 3px solid #d4af37; }}
+                .sec-tag {{
+                    display: inline-block; font-size: 9px; font-weight: 700;
+                    text-transform: uppercase; letter-spacing: 1.5px;
+                    padding: 2px 8px; margin-bottom: 8px;
+                }}
+                .sec-tag.ipc-tag {{ background: rgba(136,136,136,0.08); color: #888; border: 1px solid #333; }}
+                .sec-tag.bns-tag {{ background: rgba(212,175,55,0.1); color: #d4af37; border: 1px solid rgba(212,175,55,0.3); }}
+                .sec-title {{
+                    font-family: 'Cormorant Garamond', serif;
+                    font-size: 14px; color: #e8e0d0; font-weight: 700;
+                    margin-bottom: 6px;
+                }}
+                .sec-text {{ font-size: 12px; color: #999; line-height: 1.6; }}
+
+                .col-header {{
+                    font-family: 'Cormorant Garamond', serif;
+                    text-align: center; padding: 8px 0; margin-bottom: 4px;
+                    font-size: 14px; font-weight: 700; letter-spacing: 2px;
+                    text-transform: uppercase;
+                }}
+                .col-header.ipc {{ color: #888; border-bottom: 1px solid #333; }}
+                .col-header.bns {{ color: #d4af37; border-bottom: 1px solid rgba(212,175,55,0.3); }}
+                </style></head><body>
+
+                <div class="scenario-banner">
+                    <div class="label">⊜ Case Scenario</div>
+                    <div class="text">{scenario}</div>
+                </div>
+
+                <div class="stats-row">
+                    <div class="stat"><div class="num">{ipc_count}</div><div class="lab">IPC Sections</div></div>
+                    <div class="stat"><div class="num">{shared_count}</div><div class="lab">Mappings Found</div></div>
+                    <div class="stat"><div class="num">{bns_count}</div><div class="lab">BNS Sections</div></div>
+                </div>
+
+                <div class="diagram-box">
+                    <div class="diagram-title">⟿  Migration Diagram  ⟿</div>
+                    <div class="diagram-sub">Old Law &nbsp;→&nbsp; New Law</div>
+
+                    <div class="header-labels">
+                        <span class="ipc-h">IPC 1860 (OLD)</span>
+                        <span class="bns-h">BNS 2023 (NEW)</span>
+                    </div>
+
+                    <svg width="100%" height="{svg_height}" viewBox="0 0 800 {svg_height}"
+                         preserveAspectRatio="xMidYMid meet">
+                        {lines_svg}
+                        {ipc_svg}
+                        {bns_svg}
+                    </svg>
+                </div>
+
+                <div class="cards-grid">
+                    <div>
+                        <div class="col-header ipc">IPC · Old Provisions</div>
+                        {ipc_cards_html or '<div class="sec-card ipc"><div class="sec-text">No IPC sections retrieved.</div></div>'}
+                    </div>
+                    <div>
+                        <div class="col-header bns">BNS · New Provisions</div>
+                        {bns_cards_html or '<div class="sec-card bns"><div class="sec-text">No BNS sections retrieved.</div></div>'}
+                    </div>
+                </div>
+
+                </body></html>""", height=svg_height + 700, scrolling=True)
 
                 st.markdown("---")
-                st.markdown("### 🤖 AI Analysis")
-                st.markdown(f'<div class="msg-bot">⚖️ {result["llm_analysis"]}</div>', unsafe_allow_html=True)
+                st.markdown("### Legal Analysis")
+                st.markdown(f'<div class="msg-bot">{result["llm_analysis"]}</div>', unsafe_allow_html=True)
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # TAB 3 — SECTION TRANSLATOR
@@ -752,7 +956,7 @@ with tab3:
             # LLM explanation
             if not is_repealed:
                 with st.spinner("Getting AI explanation…"):
-                    from nyaya_sahayak.llm_client import chat as llm_chat
+                    from core.sarvam_engine import chat as llm_chat
                     explanation = llm_chat([
                         {"role": "user", "content":
                          f"Explain the change from IPC {result['ipc_section']} ({result['ipc_name']}) "
@@ -981,7 +1185,7 @@ with tab4:
         if followup_submit and followup_q.strip():
             with st.spinner("Thinking…"):
                 try:
-                    from nyaya_sahayak.llm_client import chat as llm_chat, ANSWER_SYSTEM_PROMPT_EN
+                    from core.sarvam_engine import chat as llm_chat, ANSWER_SYSTEM_PROMPT_EN
                     profile_text = "\n".join(f"- {k}: {v}" for k, v in st.session_state.scheme_profile.items())
                     schemes_text = "\n".join(f"- {s['name']}: {s.get('benefit','')}" for s in st.session_state.scheme_matched)
                     followup_answer = llm_chat(
@@ -1047,7 +1251,7 @@ with tab5:
         else:
             with st.spinner("Retrieving applicable BNS sections and drafting FIR…"):
                 try:
-                    from nyaya_sahayak.llm_client import generate_fir
+                    from core.sarvam_engine import generate_fir
                     engine = load_engine()
 
                     # Retrieve top 5 BNS sections from incident description
@@ -1122,7 +1326,7 @@ with tab6:
         else:
             with st.spinner("Analysing bail eligibility…"):
                 try:
-                    from nyaya_sahayak.llm_client import check_bail_eligibility
+                    from core.sarvam_engine import check_bail_eligibility
                     engine = load_engine()
 
                     # Build search query

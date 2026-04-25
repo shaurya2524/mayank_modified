@@ -14,7 +14,7 @@ from openai import OpenAI
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from nyaya_sahayak.config import (
+from core.settings import (
     LLM_BASE_URL, LLM_API_KEY, LLM_MODEL,
     MAX_TOKENS_ANSWER, TEMPERATURE_LEGAL
 )

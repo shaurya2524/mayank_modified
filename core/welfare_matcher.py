@@ -13,7 +13,7 @@ from typing import Optional
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from nyaya_sahayak.llm_client import chat
+from core.sarvam_engine import chat
 
 PARQUET_PATH = Path(__file__).parent.parent / "data.parquet"
 MYSCHEME_BASE = "https://www.myscheme.gov.in/schemes"

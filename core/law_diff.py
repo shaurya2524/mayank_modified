@@ -11,9 +11,9 @@ from typing import Optional
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from nyaya_sahayak.config import IPC_BNS_MAPPING_PATH, ROOT
-from nyaya_sahayak.llm_client import chat, compare_sections
-from nyaya_sahayak.rag_engine import get_engine
+from core.settings import IPC_BNS_MAPPING_PATH, ROOT
+from core.sarvam_engine import chat, compare_sections
+from core.legal_retriever import get_engine
 
 # ── IPC→BNS Mapping Table ────────────────────────────────────────────────────────
 # Comprehensive hand-crafted mapping (IPC section → BNS section)

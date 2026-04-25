@@ -14,8 +14,8 @@ sys.path.insert(0, str(ROOT))
 from dotenv import load_dotenv
 load_dotenv(str(ROOT / ".env"))
 
-from nyaya_sahayak.config import LLM_API_KEY, LLM_BASE_URL, LLM_MODEL, ROOT
-from nyaya_sahayak.comparator import _BUILTIN_MAPPING, IPC_BNS_MAPPING_PATH
+from core.settings import LLM_API_KEY, LLM_BASE_URL, LLM_MODEL, ROOT
+from core.law_diff import _BUILTIN_MAPPING, IPC_BNS_MAPPING_PATH
 from openai import OpenAI
 
 # ── Config ───────────────────────────────────────────────────────────────────
