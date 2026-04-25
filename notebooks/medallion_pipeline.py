@@ -19,30 +19,31 @@
 # MAGIC %md
 # MAGIC ## Step 0 — Set up the Sarvam API Secret  (run ONCE per workspace)
 # MAGIC
-# MAGIC The Streamlit app reads the Sarvam API key from a Databricks Secret called `sarvam_api_key`.
-# MAGIC The cell below creates it for you. **Replace the placeholder with your actual Sarvam key**, run the cell once, then delete the cell (or just leave it — `put` is idempotent).
+# MAGIC The Streamlit app reads the Sarvam API key from a Databricks Secret called `nyaya/sarvam_api_key`.
 # MAGIC
-# MAGIC ```python
-# MAGIC # ▼ RUN THIS ONCE THEN COMMENT OUT ▼
-# MAGIC # try:
-# MAGIC #     dbutils.secrets.createScope("nyaya")
-# MAGIC # except Exception:
-# MAGIC #     pass  # scope already exists
-# MAGIC # dbutils.secrets.put(
-# MAGIC #     scope="nyaya",
-# MAGIC #     key="sarvam_api_key",
-# MAGIC #     string_value="sk_your_sarvam_key_here",
-# MAGIC # )
-# MAGIC # print("✅ Secret 'nyaya/sarvam_api_key' set.")
-# MAGIC ```
+# MAGIC **One-time setup:**
+# MAGIC 1. Uncomment the cell below
+# MAGIC 2. Replace `"sk_your_sarvam_key_here"` with your actual Sarvam API key
+# MAGIC 3. Run the cell once
+# MAGIC 4. Re-comment the cell (so the key isn't accidentally re-saved on later runs)
 # MAGIC
-# MAGIC Then update `app.yaml` so the env var resolves from this secret:
-# MAGIC ```yaml
-# MAGIC env:
-# MAGIC   - name: sarvam_api_key
-# MAGIC     valueFrom: nyaya/sarvam_api_key
-# MAGIC ```
-# MAGIC (already set in this repo).
+# MAGIC `app.yaml` already references this secret via `valueFrom: nyaya/sarvam_api_key`.
+
+# COMMAND ----------
+
+# ▼ STEP 0 — UNCOMMENT, REPLACE KEY, RUN ONCE, RE-COMMENT ▼
+
+# try:
+#     dbutils.secrets.createScope("nyaya")
+# except Exception:
+#     pass  # scope already exists — that's fine
+#
+# dbutils.secrets.put(
+#     scope="nyaya",
+#     key="sarvam_api_key",
+#     string_value="sk_your_sarvam_key_here",
+# )
+# print("✅ Secret 'nyaya/sarvam_api_key' has been stored.")
 
 # COMMAND ----------
 
