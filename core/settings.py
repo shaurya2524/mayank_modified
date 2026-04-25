@@ -9,7 +9,7 @@ from pathlib import Path
 try:
     from dotenv import load_dotenv
 except ImportError:
-    def load_dotenv(*args, **kwargs):  # type: ignore[override]
+    def load_dotenv(*args, **kwargs):
         return False
 
 # Load .env — try both the file's parent directory and CWD
