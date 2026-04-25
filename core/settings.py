@@ -10,6 +10,7 @@ try:
     from dotenv import load_dotenv
 except ImportError:
     def load_dotenv(*args, **kwargs):
+        """No-op fallback when python-dotenv is not installed."""
         return False
 
 # Load .env — try both the file's parent directory and CWD
