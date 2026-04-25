@@ -52,11 +52,27 @@ SYSTEM_PROMPT_HI = """आप न्याय-सहायक हैं, एक �
 
 def _get_client() -> OpenAI:
     """Return an OpenAI-compatible client pointed at Sarvam-M / HF endpoint."""
-    return OpenAI(
-        api_key=LLM_API_KEY,
-        base_url=LLM_BASE_URL,
-        timeout=120.0,
-    )
+    from dotenv import load_dotenv
+    load_dotenv(Path(__file__).parent.parent / ".env", override=False)
+
+    sarvam_key = os.environ.get("SARVAM_API_KEY", "")
+    hf_token   = os.environ.get("HF_TOKEN", "")
+
+    if sarvam_key:
+        api_key  = sarvam_key
+        base_url = os.environ.get("SARVAM_API_BASE", "https://api.sarvam.ai/v1")
+        model    = "sarvam-m"
+    else:
+        api_key  = hf_token
+        base_url = os.environ.get("HF_BASE_URL", "https://api-inference.huggingface.co/v1")
+        model    = "sarvamai/sarvam-m"
+
+    # store resolved model so chat() can use it
+    _get_client.model = model
+
+    return OpenAI(api_key=api_key, base_url=base_url, timeout=120.0)
+
+_get_client.model = LLM_MODEL
 
 
 # ── Core Chat Function ──────────────────────────────────────────────────────────
@@ -96,7 +112,7 @@ def chat(
     else:
         try:
             response = client.chat.completions.create(
-                model=LLM_MODEL,
+                model=_get_client.model,
                 messages=full_messages,
                 max_tokens=max_tokens,
                 temperature=temperature,
@@ -104,7 +120,9 @@ def chat(
             raw = response.choices[0].message.content or ""
             return _strip_think_tags(raw)
         except Exception as e:
-            return f"⚠️ LLM Error: {e}\n\nPlease check your API token and network connection."
+            import traceback
+            traceback.print_exc()
+            return f"⚠️ LLM Error: {type(e).__name__}: {e}\n\nPlease check your API token and network connection."
 
 
 def _stream_response(
@@ -116,7 +134,7 @@ def _stream_response(
     """Yield text chunks from a streaming response."""
     try:
         stream = client.chat.completions.create(
-            model=LLM_MODEL,
+            model=_get_client.model,
             messages=messages,
             max_tokens=max_tokens,
             temperature=temperature,
@@ -480,6 +498,66 @@ def summarize_conversation(chat_summary: str, recent_turns: list) -> str:
         max_tokens=200,
         temperature=0.1,
         _system_override=SUMMARIZE_PROMPT,
+    )
+
+
+BAIL_SYSTEM_PROMPT = """You are an expert Indian criminal law assistant specializing in bail jurisprudence under the Bharatiya Nagarik Suraksha Sanhita 2023 (BNSS) and Bharatiya Nyaya Sanhita 2023 (BNS).
+
+You will be given details of an offense (BNS section, punishment, nature of crime) and optionally personal circumstances of the accused. Your job is to give a clear, structured bail assessment.
+
+Output your response in this EXACT structure:
+
+## VERDICT
+[One of: BAILABLE | NON-BAILABLE | ANTICIPATORY BAIL ADVISABLE | DEPENDS ON COURT]
+
+## BASIS
+[1-2 sentences explaining the legal basis — cite the punishment range and why it is/isn't bailable]
+
+## KEY FACTORS CONSIDERED
+[Bullet points of factors that support or oppose bail in this case]
+
+## HOW TO APPLY FOR BAIL
+[Which BNSS section applies and step-by-step what to do:
+- Regular bail → BNSS Section 480 (before Magistrate)
+- High Court/Sessions → BNSS Section 483
+- Anticipatory bail → BNSS Section 482 (before Sessions Court or High Court)]
+
+## IMPORTANT NOTE
+[Any critical caveats — e.g. court's discretion, repeat offender considerations, special categories like women/sick/elderly]
+
+Rules:
+- Base your verdict on BNS punishment: ≤3 years imprisonment → typically bailable; >3 years → non-bailable
+- Offenses punishable with death or life imprisonment are ALWAYS non-bailable
+- Women, minors, sick/infirm accused → courts are generally more liberal with bail
+- First-time offenders → courts tend to grant bail with conditions
+- NEVER say "consult a lawyer" as the first response — give the actual assessment first, disclaimer at the end
+- Respond in the SAME language as the user's input"""
+
+
+def check_bail_eligibility(
+    offense_description: str,
+    bns_context: str,
+    accused_details: str = "",
+    language: str = "en",
+) -> str:
+    """Assess bail eligibility for a given offense using BNS section context."""
+    accused_block = f"\nACCUSED CIRCUMSTANCES:\n{accused_details}" if accused_details.strip() else ""
+
+    user_message = f"""OFFENSE / BNS SECTION DETAILS:
+{offense_description}
+
+RETRIEVED BNS SECTION TEXT:
+{bns_context if bns_context else "[No specific section retrieved — assess based on offense description]"}
+{accused_block}
+
+Provide a complete bail assessment."""
+
+    return chat(
+        [{"role": "user", "content": user_message}],
+        language=language,
+        max_tokens=900,
+        temperature=0.15,
+        _system_override=BAIL_SYSTEM_PROMPT,
     )
 
 

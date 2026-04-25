@@ -7,9 +7,10 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Load .env from project root
+# Load .env — try both the file's parent directory and CWD
 ROOT = Path(__file__).parent.parent
-load_dotenv(ROOT / ".env")
+load_dotenv(ROOT / ".env", override=True)
+load_dotenv(Path.cwd() / ".env", override=True)
 
 # ── LLM Configuration ──────────────────────────────────────────────────────────
 HF_TOKEN         = os.getenv("HF_TOKEN", "")

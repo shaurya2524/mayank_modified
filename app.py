@@ -21,544 +21,287 @@ st.set_page_config(
 # ── CSS ─────────────────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wdth,wght@0,62.5..100,100..900;1,62.5..100,100..900&family=Noto+Sans+Devanagari:wght@100..900&family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Devanagari:wght@300;400;500;600&display=swap');
 
 /* ═══════════════════════════════════════════════════════════
-   KEYFRAME ANIMATIONS
-═══════════════════════════════════════════════════════════ */
-@keyframes shimmer {
-    0%   { background-position: -200% center; }
-    100% { background-position:  200% center; }
-}
-@keyframes pulse-glow {
-    0%, 100% { box-shadow: 0 0 22px rgba(245,158,11,0.12), 0 0 70px rgba(245,158,11,0.04); }
-    50%       { box-shadow: 0 0 38px rgba(245,158,11,0.28), 0 0 100px rgba(245,158,11,0.09); }
-}
-@keyframes float-in {
-    from { opacity: 0; transform: translateY(12px); }
-    to   { opacity: 1; transform: translateY(0); }
-}
-@keyframes stat-pop {
-    0%   { transform: scale(0.90); opacity: 0; }
-    100% { transform: scale(1);    opacity: 1; }
-}
-
-/* ═══════════════════════════════════════════════════════════
-   RESET & BASE
+   RESET & BASE — BLACK + GOLD THEME
 ═══════════════════════════════════════════════════════════ */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-html, body, [data-testid="stAppViewContainer"] {
-    background: #050d1a !important;
-    color: #e2e8f0 !important;
-    font-family: 'Inter', 'Noto Sans', 'Noto Sans Devanagari', sans-serif !important;
+html, body,
+[data-testid="stAppViewContainer"],
+[data-testid="stMain"],
+.main,
+.block-container {
+    background-color: #0a0a0a !important;
+    color: #e8e0d0 !important;
+    font-family: 'Inter', 'Noto Sans Devanagari', sans-serif !important;
 }
 
-[data-testid="stHeader"]  { background: transparent !important; }
-[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #070f1e 0%, #0a1628 100%) !important;
-    border-right: 1px solid rgba(245,158,11,0.07) !important;
-}
+[data-testid="stAppViewContainer"] > section,
+[data-testid="stAppViewContainer"] > section > div,
+.stApp { background-color: #0a0a0a !important; }
+
+[data-testid="stHeader"] { background: #0a0a0a !important; border-bottom: 1px solid #1e1e1e !important; }
+[data-testid="stSidebar"] { background: #111111 !important; border-right: 1px solid #1e1e1e !important; }
+[data-testid="stSidebar"] * { color: #e8e0d0 !important; }
 
 /* ═══════════════════════════════════════════════════════════
    HERO BANNER
 ═══════════════════════════════════════════════════════════ */
 .hero {
-    position: relative;
-    overflow: hidden;
-    border-radius: 24px;
-    padding: 3rem 2.5rem 2.4rem;
+    background: linear-gradient(180deg, #111111 0%, #0a0a0a 100%);
+    border: 1px solid #2a2a2a;
+    border-top: 3px solid #d4af37;
+    padding: 2.2rem 2.5rem 1.8rem;
     text-align: center;
-    margin-bottom: 1.8rem;
-    background: linear-gradient(140deg,
-        #060f1f 0%,
-        #0d1a33 28%,
-        #150d2a 58%,
-        #060f1f 100%);
-    border: 1px solid rgba(245,158,11,0.20);
-    animation: pulse-glow 5s ease-in-out infinite;
+    margin-bottom: 1.4rem;
 }
-
-/* Radial spotlights */
-.hero::before {
-    content: '';
-    position: absolute; inset: 0;
-    background:
-        radial-gradient(ellipse 72% 55% at 50% -8%,  rgba(245,158,11,0.17) 0%, transparent 65%),
-        radial-gradient(ellipse 38% 28% at 12% 110%, rgba(124,58,237,0.10) 0%, transparent 60%),
-        radial-gradient(ellipse 38% 28% at 88% 110%, rgba(245,158,11,0.07) 0%, transparent 60%);
-    pointer-events: none;
-}
-
-/* Animated shimmer top edge */
-.hero::after {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0; height: 2px;
-    background: linear-gradient(90deg,
-        transparent 0%,
-        rgba(245,158,11,0.0) 15%,
-        rgba(245,158,11,0.85) 48%,
-        rgba(253,230,138,1.0) 52%,
-        rgba(245,158,11,0.85) 55%,
-        rgba(245,158,11,0.0) 85%,
-        transparent 100%);
-    background-size: 200% auto;
-    animation: shimmer 3.5s linear infinite;
-}
-
-.hero-inner { position: relative; z-index: 1; }
-
 .hero-emblem {
-    font-size: 3.2rem;
-    line-height: 1;
-    margin-bottom: .65rem;
-    display: block;
-    filter: drop-shadow(0 0 22px rgba(245,158,11,0.55));
+    font-size: 2rem; line-height: 1; margin-bottom: .5rem;
+    display: block; color: #d4af37;
 }
-
 .hero h1 {
-    font-size: 3rem;
-    font-weight: 800;
-    letter-spacing: -1.5px;
-    line-height: 1.05;
-    margin-bottom: .45rem;
-    background: linear-gradient(120deg, #f59e0b 0%, #fde68a 40%, #f8b84e 70%, #f59e0b 100%);
-    background-size: 200% auto;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    animation: shimmer 4s linear infinite;
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 2.8rem; font-weight: 700;
+    letter-spacing: 1px; line-height: 1.1;
+    margin-bottom: .4rem;
+    color: #d4af37;
 }
-
 .hero .tagline {
-    color: #94a3b8;
-    font-size: 1.08rem;
-    font-weight: 400;
-    letter-spacing: .3px;
-    margin-bottom: .7rem;
+    color: #888; font-size: .88rem;
+    letter-spacing: 2px; text-transform: uppercase;
+    margin-bottom: .9rem; font-weight: 400;
 }
-
-.hero .subtitle {
-    display: inline-flex;
-    flex-wrap: wrap;
-    gap: .4rem;
-    justify-content: center;
-    margin-top: .4rem;
-}
-
+.hero-rule { width: 40px; height: 1px; background: #d4af37; margin: 0 auto .9rem; opacity: .6; }
+.hero .subtitle { display: inline-flex; flex-wrap: wrap; gap: .5rem; justify-content: center; }
 .hero .pill {
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 999px;
-    padding: .25rem .9rem;
-    font-size: .79rem;
-    color: #64748b;
-    letter-spacing: .3px;
-    backdrop-filter: blur(6px);
+    background: transparent; border: 1px solid #2a2a2a;
+    padding: .2rem .8rem; font-size: .68rem;
+    color: #666; letter-spacing: 1px; font-weight: 500; text-transform: uppercase;
 }
 
 /* ═══════════════════════════════════════════════════════════
-   PREMIUM STAT CARDS  (replaces st.metric)
+   STAT CARDS
 ═══════════════════════════════════════════════════════════ */
 .stat-card {
-    background: rgba(10,20,38,0.78);
-    border: 1px solid rgba(245,158,11,0.13);
-    border-radius: 16px;
-    padding: 1.1rem 1.2rem 1rem;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    transition: border-color .25s ease, transform .25s ease, box-shadow .25s ease;
-    animation: stat-pop .5s ease forwards;
+    background: #111111; border: 1px solid #2a2a2a; border-top: 2px solid #d4af37;
+    padding: 1.1rem 1.2rem; display: flex; align-items: center; gap: .9rem;
+    transition: border-top-color .2s, box-shadow .2s;
 }
-.stat-card:hover {
-    border-color: rgba(245,158,11,0.38);
-    transform: translateY(-3px);
-    box-shadow: 0 14px 36px rgba(0,0,0,0.38), 0 0 0 1px rgba(245,158,11,0.09);
-}
+.stat-card:hover { box-shadow: 0 4px 24px rgba(212,175,55,0.08); border-top-color: #b8960c; }
 .stat-icon {
-    width: 46px; height: 46px;
-    border-radius: 12px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.35rem;
-    flex-shrink: 0;
+    width: 40px; height: 40px; background: rgba(212,175,55,0.07);
+    border: 1px solid rgba(212,175,55,0.15); display: flex;
+    align-items: center; justify-content: center; font-size: 1.1rem;
+    flex-shrink: 0; color: #d4af37;
 }
-.stat-icon.amber  { background: rgba(245,158,11,0.12); box-shadow: 0 0 18px rgba(245,158,11,0.14); }
-.stat-icon.violet { background: rgba(124,58,237,0.12); box-shadow: 0 0 18px rgba(124,58,237,0.14); }
-.stat-icon.green  { background: rgba(34,197,94,0.10);  box-shadow: 0 0 18px rgba(34,197,94,0.12); }
-.stat-icon.blue   { background: rgba(59,130,246,0.10); box-shadow: 0 0 18px rgba(59,130,246,0.12); }
-.stat-body  { display: flex; flex-direction: column; gap: .12rem; min-width: 0; }
+.stat-icon.amber, .stat-icon.violet, .stat-icon.green, .stat-icon.blue { background: rgba(212,175,55,0.06); }
+.stat-body { display: flex; flex-direction: column; gap: .12rem; }
 .stat-value {
-    font-size: 1.6rem; font-weight: 800;
-    color: #f59e0b; line-height: 1; letter-spacing: -0.5px;
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.6rem; font-weight: 700; color: #d4af37; line-height: 1;
 }
-.stat-label {
-    font-size: .70rem; color: #4b5e7a;
-    text-transform: uppercase; letter-spacing: .9px; font-weight: 600;
-}
-
-/* Language card */
+.stat-label { font-size: .62rem; color: #666; text-transform: uppercase; letter-spacing: 1.2px; font-weight: 600; }
 .lang-card {
-    background: rgba(10,20,38,0.78);
-    border: 1px solid rgba(245,158,11,0.13);
-    border-radius: 16px;
-    padding: .9rem 1.3rem;
-    display: flex; align-items: center; gap: .8rem;
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    color: #94a3b8; font-size: .88rem; letter-spacing: .2px;
+    background: #111111; border: 1px solid #2a2a2a; border-top: 2px solid #555;
+    padding: .9rem 1.2rem; display: flex; align-items: center; gap: .8rem;
+    color: #888; font-size: .85rem; height: 100%;
 }
-.lang-card .lang-icon {
-    font-size: 1.4rem;
-    filter: drop-shadow(0 0 10px rgba(245,158,11,0.45));
-}
-.lang-card strong { color: #f59e0b; font-weight: 600; }
+.lang-card .lang-icon { font-size: 1.2rem; color: #d4af37; }
+.lang-card strong { color: #e8e0d0; font-weight: 600; }
 
 /* ═══════════════════════════════════════════════════════════
-   GLASS CARDS
+   CARDS
 ═══════════════════════════════════════════════════════════ */
 .card {
-    position: relative;
-    background: rgba(9,18,34,0.84);
-    border: 1px solid rgba(245,158,11,0.12);
-    border-radius: 16px;
-    padding: 1.5rem 1.65rem;
-    margin-bottom: 1.1rem;
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    transition: border-color .22s ease, box-shadow .22s ease, transform .22s ease;
-    animation: float-in .4s ease both;
-    overflow: hidden;
+    background: #111111; border: 1px solid #2a2a2a;
+    border-left: 3px solid #d4af37;
+    padding: 1.2rem 1.5rem; margin-bottom: 1.2rem;
+    transition: box-shadow .2s;
 }
-.card::before {
-    content: '';
-    position: absolute; inset: 0;
-    border-radius: inherit;
-    background: linear-gradient(135deg,
-        rgba(245,158,11,0.04) 0%,
-        transparent 50%,
-        rgba(124,58,237,0.025) 100%);
-    pointer-events: none;
-}
-.card:hover {
-    border-color: rgba(245,158,11,0.35);
-    transform: translateY(-2px);
-    box-shadow: 0 12px 44px rgba(0,0,0,0.42), 0 0 0 1px rgba(245,158,11,0.07);
-}
+.card:hover { box-shadow: 0 4px 20px rgba(212,175,55,0.07); }
 .card h4 {
-    color: #f59e0b;
-    font-size: 1.02rem;
-    font-weight: 700;
-    margin-bottom: .55rem;
-    letter-spacing: .1px;
-    display: flex;
-    align-items: center;
-    gap: .55rem;
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    color: #d4af37; font-size: 1.05rem; font-weight: 600;
+    margin-bottom: .4rem; display: flex; align-items: center; gap: .5rem;
 }
-.card h4::before {
-    content: '';
-    flex-shrink: 0;
-    display: inline-block;
-    width: 3px; height: 1.1em;
-    background: linear-gradient(180deg, #f59e0b, #92400e);
-    border-radius: 2px;
-}
-.card p { color: #94a3b8; font-size: .9rem; line-height: 1.65; }
+.card p { color: #888; font-size: .88rem; line-height: 1.7; }
 
 /* ═══════════════════════════════════════════════════════════
    COMPARISON TABLE
 ═══════════════════════════════════════════════════════════ */
 .compare-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
 .compare-table th {
-    background: rgba(245,158,11,0.09);
-    color: #f59e0b;
-    padding: .75rem 1rem;
-    text-align: left;
-    font-size: .82rem; font-weight: 700;
-    letter-spacing: .5px; text-transform: uppercase;
-    border-bottom: 1px solid rgba(245,158,11,0.16);
+    background: #111111; color: #d4af37; padding: .75rem 1rem;
+    text-align: left; font-size: .72rem; font-weight: 700;
+    letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px solid #2a2a2a;
 }
 .compare-table td {
-    padding: .75rem 1rem;
-    border-bottom: 1px solid rgba(255,255,255,0.04);
-    color: #cbd5e1; font-size: .88rem; vertical-align: top;
+    padding: .75rem 1rem; border-bottom: 1px solid #1a1a1a;
+    color: #ccc; font-size: .87rem; vertical-align: top;
 }
-.compare-table tr:hover td { background: rgba(245,158,11,0.032); }
+.compare-table tr:hover td { background: #111111; }
 
 /* ═══════════════════════════════════════════════════════════
    TAGS
 ═══════════════════════════════════════════════════════════ */
 .tag-bns {
     display: inline-flex; align-items: center; gap: .3rem;
-    background: rgba(34,197,94,0.11); color: #4ade80;
-    border: 1px solid rgba(34,197,94,0.24);
-    padding: 3px 11px; border-radius: 999px; font-size: .78rem; font-weight: 600;
+    background: rgba(212,175,55,0.08); color: #d4af37;
+    border: 1px solid rgba(212,175,55,0.25);
+    padding: 3px 11px; font-size: .72rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .6px;
 }
 .tag-ipc {
     display: inline-flex; align-items: center; gap: .3rem;
-    background: rgba(239,68,68,0.11); color: #f87171;
-    border: 1px solid rgba(239,68,68,0.24);
-    padding: 3px 11px; border-radius: 999px; font-size: .78rem; font-weight: 600;
+    background: rgba(255,255,255,0.05); color: #888;
+    border: 1px solid #2a2a2a;
+    padding: 3px 11px; font-size: .72rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .6px;
 }
 .tag-new {
     display: inline-flex; align-items: center; gap: .3rem;
-    background: rgba(124,58,237,0.11); color: #a78bfa;
-    border: 1px solid rgba(124,58,237,0.24);
-    padding: 3px 11px; border-radius: 999px; font-size: .78rem; font-weight: 600;
+    background: rgba(212,175,55,0.06); color: #b8960c;
+    border: 1px solid rgba(212,175,55,0.18);
+    padding: 3px 11px; font-size: .72rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .6px;
 }
 
 /* ═══════════════════════════════════════════════════════════
-   SCHEME BADGES  (category-coded)
+   SCHEME BADGES
 ═══════════════════════════════════════════════════════════ */
 .scheme-badge {
-    display: inline-block; padding: 3px 10px; border-radius: 999px;
-    font-size: .72rem; font-weight: 600; margin-right: .3rem; border: 1px solid;
+    display: inline-block; padding: 2px 8px;
+    font-size: .65rem; font-weight: 700; margin-right: .3rem; border: 1px solid;
+    text-transform: uppercase; letter-spacing: .8px; color: #d4af37;
+    background: rgba(212,175,55,0.07); border-color: rgba(212,175,55,0.2);
 }
-.scheme-badge.cat-agriculture { background:rgba(34,197,94,0.11);  color:#4ade80; border-color:rgba(34,197,94,0.26); }
-.scheme-badge.cat-social      { background:rgba(124,58,237,0.11); color:#a78bfa; border-color:rgba(124,58,237,0.26); }
-.scheme-badge.cat-education   { background:rgba(59,130,246,0.11); color:#60a5fa; border-color:rgba(59,130,246,0.26); }
-.scheme-badge.cat-health      { background:rgba(239,68,68,0.11);  color:#f87171; border-color:rgba(239,68,68,0.26); }
-.scheme-badge.cat-housing     { background:rgba(249,115,22,0.11); color:#fb923c; border-color:rgba(249,115,22,0.26); }
-.scheme-badge.cat-finance     { background:rgba(245,158,11,0.11); color:#f59e0b; border-color:rgba(245,158,11,0.26); }
-.scheme-badge.cat-women       { background:rgba(236,72,153,0.11); color:#f472b6; border-color:rgba(236,72,153,0.26); }
-.scheme-badge.cat-legal       { background:rgba(20,184,166,0.11); color:#2dd4bf; border-color:rgba(20,184,166,0.26); }
-.scheme-badge.cat-default     { background:rgba(245,158,11,0.09); color:#f59e0b; border-color:rgba(245,158,11,0.20); }
+.scheme-badge.cat-agriculture,.scheme-badge.cat-social,.scheme-badge.cat-education,
+.scheme-badge.cat-health,.scheme-badge.cat-housing,.scheme-badge.cat-finance,
+.scheme-badge.cat-women,.scheme-badge.cat-legal,.scheme-badge.cat-default {
+    color: #d4af37; background: rgba(212,175,55,0.06); border-color: rgba(212,175,55,0.18);
+}
 
 /* ═══════════════════════════════════════════════════════════
    SCHEME CARDS
 ═══════════════════════════════════════════════════════════ */
 .scheme-card {
-    position: relative;
-    background: linear-gradient(135deg,
-        rgba(9,18,34,0.92) 0%,
-        rgba(15,10,30,0.88) 100%);
-    border: 1px solid rgba(124,58,237,0.18);
-    border-radius: 15px;
-    padding: 1.2rem 1.35rem;
-    margin-bottom: .9rem;
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    transition: border-color .22s ease, transform .22s ease, box-shadow .22s ease;
-    overflow: hidden;
+    background: #111111; border: 1px solid #2a2a2a;
+    border-left: 3px solid #d4af37;
+    padding: 1.1rem 1.3rem; margin-bottom: .9rem;
+    transition: box-shadow .2s;
 }
-.scheme-card::before {
-    content: '';
-    position: absolute; top: 0; left: 0; right: 0; height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(124,58,237,0.45), transparent);
-}
-.scheme-card:hover {
-    border-color: rgba(124,58,237,0.42);
-    transform: translateY(-2px);
-    box-shadow: 0 10px 32px rgba(0,0,0,0.42), 0 0 22px rgba(124,58,237,0.07);
-}
-.scheme-card .sc-title   { color: #c4b5fd; font-weight: 700; font-size: .97rem; }
-.scheme-card .sc-benefit {
-    color: #4ade80; font-size: .85rem; margin: .38rem 0;
-    display: flex; align-items: center; gap: .4rem;
-}
-.scheme-card .sc-eligibility { color: #64748b; font-size: .82rem; line-height: 1.55; }
+.scheme-card:hover { box-shadow: 0 4px 20px rgba(212,175,55,0.08); }
+.scheme-card .sc-title   { color: #e8e0d0; font-weight: 700; font-size: .95rem; font-family: 'Cormorant Garamond', Georgia, serif; }
+.scheme-card .sc-benefit { color: #d4af37; font-size: .84rem; margin: .35rem 0; font-weight: 500; }
+.scheme-card .sc-eligibility { color: #666; font-size: .81rem; line-height: 1.6; }
 
 /* ═══════════════════════════════════════════════════════════
    CHAT BUBBLES
 ═══════════════════════════════════════════════════════════ */
 .msg-user {
-    background: linear-gradient(135deg, rgba(109,40,217,0.26) 0%, rgba(124,58,237,0.18) 100%);
-    border: 1px solid rgba(124,58,237,0.36);
-    border-radius: 18px 18px 4px 18px;
-    padding: .92rem 1.15rem;
-    margin: .6rem 0 .6rem 18%;
-    color: #ddd6fe; font-size: .93rem; line-height: 1.62;
-    backdrop-filter: blur(8px);
-    animation: float-in .3s ease;
+    background: rgba(212,175,55,0.06); border: 1px solid rgba(212,175,55,0.15);
+    border-left: 3px solid #d4af37; padding: .9rem 1.1rem;
+    margin: .7rem 0 .7rem 14%; color: #e8e0d0; font-size: .92rem; line-height: 1.7;
 }
 .msg-bot {
-    background: rgba(9,18,34,0.90);
-    border: 1px solid rgba(245,158,11,0.16);
-    border-radius: 18px 18px 18px 4px;
-    padding: .92rem 1.15rem;
-    margin: .6rem 18% .6rem 0;
-    color: #cbd5e1; font-size: .93rem; line-height: 1.70;
-    backdrop-filter: blur(8px);
-    box-shadow:
-        0 0 0 1px rgba(245,158,11,0.05),
-        0 4px 22px rgba(0,0,0,0.32),
-        0 0 32px rgba(245,158,11,0.055);
-    animation: float-in .35s ease;
-    transition: box-shadow .25s ease;
+    background: #111111; border: 1px solid #2a2a2a;
+    border-left: 3px solid #555; padding: .9rem 1.1rem;
+    margin: .7rem 14% .7rem 0; color: #ccc; font-size: .92rem; line-height: 1.75;
 }
-.msg-bot:hover {
-    box-shadow:
-        0 0 0 1px rgba(245,158,11,0.12),
-        0 8px 30px rgba(0,0,0,0.42),
-        0 0 44px rgba(245,158,11,0.10);
-}
-.msg-bot strong { color: #fbbf24; }
+.msg-bot strong { color: #d4af37; }
 
 /* ═══════════════════════════════════════════════════════════
-   TAB BAR
+   TABS
 ═══════════════════════════════════════════════════════════ */
 .stTabs [data-baseweb="tab-list"] {
-    gap: 2px;
-    background: rgba(6,13,27,0.92);
-    border-radius: 14px;
-    padding: 5px;
-    border: 1px solid rgba(245,158,11,0.11);
-    backdrop-filter: blur(12px);
+    gap: 0 !important; background: transparent !important; padding: 0 !important;
+    border-bottom: 1px solid #2a2a2a !important; margin-bottom: 1.2rem !important;
 }
 .stTabs [data-baseweb="tab"] {
-    color: #3d5068 !important;
-    border-radius: 10px !important;
-    padding: .55rem 1.3rem !important;
-    font-size: .87rem !important;
-    font-weight: 500 !important;
-    letter-spacing: .15px;
-    transition: color .2s ease, background .2s ease !important;
+    color: #555 !important; background: transparent !important; border-radius: 0 !important;
+    padding: .55rem 1.3rem !important; font-size: .75rem !important; font-weight: 600 !important;
+    letter-spacing: 1.2px !important; text-transform: uppercase !important;
+    border-bottom: 2px solid transparent !important; margin-bottom: -1px !important;
+    transition: color .15s, border-color .15s !important;
 }
-.stTabs [data-baseweb="tab"]:hover {
-    color: #94a3b8 !important;
-    background: rgba(255,255,255,0.035) !important;
-}
-.stTabs [aria-selected="true"] {
-    background: linear-gradient(135deg, rgba(180,83,9,0.28), rgba(217,119,6,0.20)) !important;
-    color: #fbbf24 !important;
-    box-shadow: 0 0 0 1px rgba(245,158,11,0.20), 0 2px 12px rgba(245,158,11,0.10) !important;
-}
+.stTabs [data-baseweb="tab"]:hover { color: #d4af37 !important; background: transparent !important; border-bottom-color: rgba(212,175,55,0.3) !important; }
+.stTabs [aria-selected="true"] { color: #d4af37 !important; border-bottom: 2px solid #d4af37 !important; font-weight: 700 !important; background: transparent !important; box-shadow: none !important; }
+.stTabs [data-baseweb="tab-panel"] { padding-top: 0 !important; }
 
 /* ═══════════════════════════════════════════════════════════
-   INPUT FIELDS
+   INPUTS & FORMS
 ═══════════════════════════════════════════════════════════ */
-.stTextInput input,
-.stTextArea textarea,
-.stSelectbox select,
-div[data-baseweb="select"] > div,
-.stNumberInput input {
-    background: rgba(6,15,28,0.88) !important;
-    border: 1px solid rgba(245,158,11,0.16) !important;
-    border-radius: 10px !important;
-    color: #e2e8f0 !important;
-    transition: border-color .2s ease, box-shadow .2s ease !important;
+.stTextInput input, .stTextArea textarea,
+div[data-baseweb="select"] > div, .stNumberInput input {
+    background: #111111 !important; border: 1px solid #2a2a2a !important;
+    color: #e8e0d0 !important; font-family: 'Inter', sans-serif !important;
 }
-.stTextInput input:focus,
-.stTextArea textarea:focus {
-    border-color: rgba(245,158,11,0.62) !important;
-    box-shadow:
-        0 0 0 3px rgba(245,158,11,0.07),
-        0 0 18px rgba(245,158,11,0.10) !important;
-    outline: none !important;
+.stTextInput input:focus, .stTextArea textarea:focus {
+    border-color: #d4af37 !important; box-shadow: 0 0 0 2px rgba(212,175,55,0.12) !important;
 }
+.stTextInput label, .stTextArea label, .stSelectbox label,
+.stNumberInput label, .stCheckbox label, .stRadio label { color: #888 !important; font-size: .83rem !important; font-weight: 500 !important; }
+.stTextInput input::placeholder, .stTextArea textarea::placeholder { color: #444 !important; }
+div[data-baseweb="select"] span { color: #e8e0d0 !important; }
+div[data-baseweb="popover"] { background: #111111 !important; border: 1px solid #2a2a2a !important; }
 
 /* ═══════════════════════════════════════════════════════════
    BUTTONS
 ═══════════════════════════════════════════════════════════ */
-.stButton > button,
-.stFormSubmitButton > button {
-    background: linear-gradient(135deg, #92400e 0%, #b45309 45%, #d97706 100%) !important;
-    color: #fff8e7 !important;
-    border: none !important;
-    border-radius: 10px !important;
-    font-weight: 700 !important;
-    font-size: .9rem !important;
-    letter-spacing: .3px;
-    padding: .58rem 1.5rem !important;
-    transition: all .22s ease !important;
-    position: relative; overflow: hidden;
+.stButton > button, .stFormSubmitButton > button {
+    background: transparent !important; color: #d4af37 !important;
+    border: 1px solid #d4af37 !important;
+    font-weight: 600 !important; font-size: .78rem !important;
+    letter-spacing: 1.2px !important; text-transform: uppercase !important;
+    padding: .55rem 1.6rem !important; transition: all .2s ease !important;
 }
-.stButton > button::after,
-.stFormSubmitButton > button::after {
-    content: '';
-    position: absolute; inset: 0;
-    background: linear-gradient(135deg, rgba(255,255,255,0.07) 0%, transparent 55%);
-    pointer-events: none;
+.stButton > button:hover, .stFormSubmitButton > button:hover {
+    background: rgba(212,175,55,0.1) !important; box-shadow: 0 0 20px rgba(212,175,55,0.15) !important;
 }
-.stButton > button:hover,
-.stFormSubmitButton > button:hover {
-    transform: translateY(-2px) !important;
-    box-shadow:
-        0 7px 26px rgba(245,158,11,0.36),
-        0 0 0 1px rgba(245,158,11,0.22) !important;
-}
-.stButton > button:active,
-.stFormSubmitButton > button:active { transform: translateY(0) !important; }
-
 [data-testid="stDownloadButton"] button {
-    background: rgba(9,18,34,0.92) !important;
-    border: 1px solid rgba(245,158,11,0.28) !important;
-    color: #f59e0b !important;
-    box-shadow: none !important;
-}
-[data-testid="stDownloadButton"] button:hover {
-    background: rgba(245,158,11,0.10) !important;
-    transform: translateY(-2px) !important;
+    background: transparent !important; border: 1px solid #555 !important;
+    color: #888 !important; letter-spacing: 1px !important;
 }
 
 /* ═══════════════════════════════════════════════════════════
-   SPINNER / DIVIDER
+   MISC
 ═══════════════════════════════════════════════════════════ */
-.stSpinner > div { border-top-color: #f59e0b !important; }
-hr { border: none !important; border-top: 1px solid rgba(245,158,11,0.07) !important; margin: 1.4rem 0 !important; }
-
-/* ═══════════════════════════════════════════════════════════
-   NATIVE STREAMLIT METRICS  (fallback styling)
-═══════════════════════════════════════════════════════════ */
-[data-testid="metric-container"] {
-    background: rgba(9,18,34,0.84);
-    border: 1px solid rgba(245,158,11,0.13);
-    border-radius: 14px; padding: 1rem 1.2rem;
-    backdrop-filter: blur(12px);
-}
-[data-testid="metric-container"] label {
-    color: #475569 !important; font-size: .70rem !important;
-    text-transform: uppercase; letter-spacing: .9px; font-weight: 600 !important;
-}
-[data-testid="metric-container"] [data-testid="stMetricValue"] {
-    color: #f59e0b !important; font-weight: 800 !important; font-size: 1.6rem !important;
-}
-
-/* ═══════════════════════════════════════════════════════════
-   MISC COMPONENTS
-═══════════════════════════════════════════════════════════ */
-.streamlit-expanderHeader {
-    background: rgba(9,18,34,0.82) !important;
-    border: 1px solid rgba(245,158,11,0.11) !important;
-    border-radius: 10px !important; color: #94a3b8 !important;
-}
-.stCheckbox label { color: #94a3b8 !important; }
-
-/* Scrollbar */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: rgba(5,13,26,0.8); }
-::-webkit-scrollbar-thumb { background: rgba(245,158,11,0.22); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(245,158,11,0.42); }
-
-/* ═══════════════════════════════════════════════════════════
-   FOOTER
-═══════════════════════════════════════════════════════════ */
-.footer {
-    text-align: center; color: #1e2d45; font-size: .76rem;
-    margin-top: 2.5rem; padding-top: 1.2rem;
-    border-top: 1px solid rgba(255,255,255,0.04);
-    letter-spacing: .3px;
-}
+.stSpinner > div { border-top-color: #d4af37 !important; }
+hr { border: none !important; border-top: 1px solid #1e1e1e !important; margin: 1rem 0 !important; }
+[data-testid="metric-container"] { background: #111111; border: 1px solid #2a2a2a; border-top: 2px solid #d4af37; }
+[data-testid="metric-container"] label { color: #555 !important; font-size: .65rem !important; text-transform: uppercase; letter-spacing: 1.2px; font-weight: 600 !important; }
+[data-testid="metric-container"] [data-testid="stMetricValue"] { color: #d4af37 !important; font-weight: 700 !important; font-family: 'Cormorant Garamond', Georgia, serif !important; }
+.stCheckbox label { color: #888 !important; }
+[data-testid="stMarkdownContainer"] h1, [data-testid="stMarkdownContainer"] h2,
+[data-testid="stMarkdownContainer"] h3, [data-testid="stMarkdownContainer"] h4 { font-family: 'Cormorant Garamond', Georgia, serif !important; color: #d4af37 !important; }
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: #111111; }
+::-webkit-scrollbar-thumb { background: #333; }
+::-webkit-scrollbar-thumb:hover { background: #d4af37; }
+.footer { text-align: center; color: #333; font-size: .74rem; margin-top: 3rem; padding-top: 1.2rem; border-top: 1px solid #1e1e1e; letter-spacing: .5px; }
+#MainMenu, footer, header { visibility: hidden !important; }
+.block-container { padding-top: 0.5rem !important; padding-bottom: 1rem !important; max-width: 1200px !important; }
+.streamlit-expanderHeader { background: #111111 !important; border: 1px solid #2a2a2a !important; color: #888 !important; }
+[data-testid="stDataFrame"] { border: 1px solid #2a2a2a !important; }
 </style>
 """, unsafe_allow_html=True)
 
 # ── Hero ─────────────────────────────────────────────────────────────────────────
 st.markdown("""
 <div class="hero">
-  <div class="hero-inner">
-    <span class="hero-emblem">⚖️</span>
-    <h1>न्याय-सहायक</h1>
-    <div class="tagline">Nyaya-Sahayak &nbsp;·&nbsp; AI-Powered Indian Legal Assistant</div>
-    <div class="subtitle">
-      <span class="pill">BNS 2023</span>
-      <span class="pill">IPC Comparison</span>
-      <span class="pill">Government Schemes</span>
-      <span class="pill">Hindi &amp; English</span>
-      <span class="pill">22+ Languages</span>
-    </div>
+  <span class="hero-emblem">⚖</span>
+  <h1>NYAYA-SAHAYAK</h1>
+  <div class="tagline">Harvey but for Indian Legal System</div>
+  <div class="hero-rule"></div>
+  <div class="subtitle">
+    <span class="pill">BNS 2023</span>
+    <span class="pill">IPC migration infrastructure</span>
+    <span class="pill">3400+ Schemes</span>
+    <span class="pill">FIR Generator</span>
+    <span class="pill">Bail Checker</span>
+    <span class="pill">22+ Languages supported </span>
   </div>
 </div>
 """, unsafe_allow_html=True)
@@ -568,10 +311,10 @@ col_lang, col_stat1, col_stat2, col_stat3, col_stat4 = st.columns([2,1,1,1,1])
 with col_lang:
     st.markdown("""
     <div class="lang-card">
-        <span class="lang-icon">🌐</span>
+        <span class="lang-icon">&#127760;</span>
         <div>
             <strong>Multilingual</strong><br>
-            <span style="font-size:.8rem; color:#475569;">Type in any Indian language</span>
+            <span style="font-size:.8rem; color:#4a4a6a;">Type in any Indian language</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -579,7 +322,7 @@ with col_lang:
 with col_stat1:
     st.markdown("""
     <div class="stat-card">
-        <div class="stat-icon amber">🗣️</div>
+        <div class="stat-icon amber">&#128483;</div>
         <div class="stat-body">
             <span class="stat-value">22+</span>
             <span class="stat-label">Languages</span>
@@ -589,7 +332,7 @@ with col_stat1:
 with col_stat2:
     st.markdown("""
     <div class="stat-card">
-        <div class="stat-icon violet">📜</div>
+        <div class="stat-icon violet">&#128220;</div>
         <div class="stat-body">
             <span class="stat-value">358</span>
             <span class="stat-label">BNS Sections</span>
@@ -599,17 +342,17 @@ with col_stat2:
 with col_stat3:
     st.markdown("""
     <div class="stat-card">
-        <div class="stat-icon green">🔄</div>
+        <div class="stat-icon green">&#8646;</div>
         <div class="stat-body">
             <span class="stat-value">300+</span>
-            <span class="stat-label">IPC→BNS Maps</span>
+            <span class="stat-label">IPC&rarr;BNS Maps</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
 with col_stat4:
     st.markdown("""
     <div class="stat-card">
-        <div class="stat-icon blue">🏛️</div>
+        <div class="stat-icon blue">&#127963;</div>
         <div class="stat-body">
             <span class="stat-value">3400+</span>
             <span class="stat-label">Gov Schemes</span>
@@ -641,12 +384,13 @@ def load_checker():
     return get_checker()
 
 # ── Tabs ─────────────────────────────────────────────────────────────────────────
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
-    "💬 Legal Chatbot",
-    "⚖️ IPC vs BNS Compare",
-    "🔄 Section Translator",
-    "🏛️ Scheme Checker",
-    "📋 FIR Generator",
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+    "§  Counsel",
+    "↔  Law Changes",
+    "⊕  Section Lookup",
+    "◈  Schemes",
+    "✦  FIR Draft",
+    "⊜  Bail Check",
 ])
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -655,89 +399,150 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
 with tab1:
     st.markdown("""
     <div class="card">
-      <h4>💬 Ask any legal question about BNS or IPC</h4>
-      <p>Ask in Hindi or English. Answers include section references and practical advice.</p>
+      <h4>§ Legal Counsel</h4>
+      <p>Ask any question about BNS 2023 or IPC. Choose your preferred response language below.</p>
     </div>
     """, unsafe_allow_html=True)
 
-    if "chat_history" not in st.session_state:
-        st.session_state.chat_history = []
-    if "chat_summary" not in st.session_state:
-        st.session_state.chat_summary = ""
-    if "recent_turns" not in st.session_state:
-        st.session_state.recent_turns = []
-    if "turn_count" not in st.session_state:
-        st.session_state.turn_count = 0
+    if "chat_lang" not in st.session_state:
+        st.session_state.chat_lang = None
 
-    # Display history
-    for role, msg in st.session_state.chat_history:
-        css_cls = "msg-user" if role == "user" else "msg-bot"
-        icon = "👤" if role == "user" else "⚖️"
-        st.markdown(f'<div class="{css_cls}">{icon} {msg}</div>', unsafe_allow_html=True)
+    if st.session_state.chat_lang is None:
+        st.markdown("#### Select response language")
+        lc1, lc2, lc3 = st.columns(3)
+        with lc1:
+            if st.button("🇬🇧  English", use_container_width=True):
+                st.session_state.chat_lang = "en"
+                st.rerun()
+        with lc2:
+            if st.button("🇮🇳  हिंदी", use_container_width=True):
+                st.session_state.chat_lang = "hi"
+                st.rerun()
+        with lc3:
+            if st.button("🌐  Auto-detect", use_container_width=True):
+                st.session_state.chat_lang = "auto"
+                st.rerun()
 
-    # Input
-    with st.form("chat_form", clear_on_submit=True):
-        c1, c2 = st.columns([5,1])
-        with c1:
-            user_q = st.text_input(
-                "Ask a question…",
-                placeholder="e.g. What is the punishment for rape under BNS? / हत्या के लिए सजा क्या है?",
-                label_visibility="collapsed",
-            )
-        with c2:
-            submitted = st.form_submit_button("Send ➤", use_container_width=True)
+    if st.session_state.chat_lang is not None:
+        # Show selected language + option to change
+        lang_label = {"en": "English", "hi": "हिंदी", "auto": "Auto-detect"}[st.session_state.chat_lang]
+        col_lbl, col_chg = st.columns([5, 1])
+        with col_lbl:
+            st.markdown(f'<div style="color:#d4af37; font-size:.78rem; letter-spacing:1px; text-transform:uppercase; padding:.3rem 0;">Response language: {lang_label}</div>', unsafe_allow_html=True)
+        with col_chg:
+            if st.button("Change", key="change_lang"):
+                st.session_state.chat_lang = None
+                st.session_state.chat_history = []
+                st.session_state.chat_summary = ""
+                st.session_state.recent_turns = []
+                st.session_state.turn_count = 0
+                st.rerun()
 
-    if submitted and user_q.strip():
-        st.session_state.chat_history.append(("user", user_q))
+        if "chat_history" not in st.session_state:
+            st.session_state.chat_history = []
+        if "chat_summary" not in st.session_state:
+            st.session_state.chat_summary = ""
+        if "recent_turns" not in st.session_state:
+            st.session_state.recent_turns = []
+        if "turn_count" not in st.session_state:
+            st.session_state.turn_count = 0
 
-        with st.spinner("Thinking…"):
-            try:
-                engine = load_engine()
-                cache  = load_cache()
+        # Display history as a single self-contained HTML component
+        if st.session_state.chat_history:
+            msgs_html = ""
+            for role, msg in st.session_state.chat_history:
+                if role == "user":
+                    msgs_html += f"""<div class="bubble user-bubble"><span class="bubble-label">You</span><div class="bubble-text">{msg}</div></div>"""
+                else:
+                    msgs_html += f"""<div class="bubble bot-bubble"><span class="bubble-label">&#9878; Nyaya-Sahayak</span><div class="bubble-text">{msg}</div></div>"""
 
-                # Check cache only for fresh queries (no conversation context yet)
-                answer = None
-                is_fresh = not st.session_state.chat_summary and not st.session_state.recent_turns
-                if is_fresh:
-                    answer = cache.check(user_q)
+            st.components.v1.html(f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+            <style>
+            @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Inter:wght@400;500;600&display=swap');
+            * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+            body {{ background: #0a0a0a; font-family: 'Inter', sans-serif; padding: 12px; }}
+            .bubble {{ margin-bottom: 16px; max-width: 85%; }}
+            .bubble-label {{ display: block; font-size: 10px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 6px; }}
+            .bubble-text {{ padding: 14px 18px; line-height: 1.7; font-size: 14px; white-space: pre-wrap; }}
+            .user-bubble {{ margin-left: auto; text-align: right; }}
+            .user-bubble .bubble-label {{ color: #d4af37; }}
+            .user-bubble .bubble-text {{ background: #111111; border: 1px solid #2a2a2a; border-right: 3px solid #d4af37; color: #e8e0d0; }}
+            .bot-bubble {{ margin-right: auto; }}
+            .bot-bubble .bubble-label {{ color: #888; font-family: 'Cormorant Garamond', serif; font-size: 12px; letter-spacing: 0.5px; text-transform: none; font-weight: 600; }}
+            .bot-bubble .bubble-text {{ background: #111111; border: 1px solid #2a2a2a; border-left: 3px solid #444; color: #ccc; font-size: 14px; }}
+            .bot-bubble .bubble-text strong {{ color: #d4af37; }}
+            </style>
+            </head>
+            <body>{msgs_html}</body>
+            </html>
+            """, height=min(400 + len(st.session_state.chat_history) * 80, 800), scrolling=True)
 
-                if answer is None:
-                    answer = engine.agentic_query(
-                        user_q,
-                        language="auto",
-                        top_k=3,
-                        chat_summary=st.session_state.chat_summary,
-                        recent_turns=st.session_state.recent_turns,
-                    )
+        # Input
+        with st.form("chat_form", clear_on_submit=True):
+            c1, c2 = st.columns([5,1])
+            with c1:
+                user_q = st.text_input(
+                    "Ask a question…",
+                    placeholder="e.g. What is the punishment for rape under BNS? / हत्या के लिए सजा क्या है?",
+                    label_visibility="collapsed",
+                )
+            with c2:
+                submitted = st.form_submit_button("Send ➤", use_container_width=True)
+
+        if submitted and user_q.strip():
+            st.session_state.chat_history.append(("user", user_q))
+
+            with st.spinner("Thinking…"):
+                try:
+                    engine = load_engine()
+                    cache  = load_cache()
+
+                    # Check cache only for fresh queries (no conversation context yet)
+                    answer = None
+                    is_fresh = not st.session_state.chat_summary and not st.session_state.recent_turns
                     if is_fresh:
-                        cache.store(user_q, answer)
+                        answer = cache.check(user_q)
 
-            except Exception as e:
-                answer = f"⚠️ Error: {e}\n\nPlease check your API token and network connection."
+                    if answer is None:
+                        answer = engine.agentic_query(
+                            user_q,
+                            language=st.session_state.get("chat_lang", "auto"),
+                            top_k=3,
+                            chat_summary=st.session_state.chat_summary,
+                            recent_turns=st.session_state.recent_turns,
+                        )
+                        if is_fresh:
+                            cache.store(user_q, answer)
 
-        # Update memory
-        st.session_state.recent_turns.append(("user", user_q))
-        st.session_state.recent_turns.append(("assistant", answer))
-        st.session_state.turn_count += 1
+                except Exception as e:
+                    answer = f"⚠️ Error: {e}\n\nPlease check your API token and network connection."
 
-        # Compress every 4 turns
-        if st.session_state.turn_count % 4 == 0:
-            from nyaya_sahayak.llm_client import summarize_conversation
-            st.session_state.chat_summary = summarize_conversation(
-                st.session_state.chat_summary,
-                st.session_state.recent_turns,
-            )
-            st.session_state.recent_turns = st.session_state.recent_turns[-4:]
+            # Update memory
+            st.session_state.recent_turns.append(("user", user_q))
+            st.session_state.recent_turns.append(("assistant", answer))
+            st.session_state.turn_count += 1
 
-        st.session_state.chat_history.append(("bot", answer))
-        st.rerun()
+            # Compress every 4 turns
+            if st.session_state.turn_count % 4 == 0:
+                from nyaya_sahayak.llm_client import summarize_conversation
+                st.session_state.chat_summary = summarize_conversation(
+                    st.session_state.chat_summary,
+                    st.session_state.recent_turns,
+                )
+                st.session_state.recent_turns = st.session_state.recent_turns[-4:]
 
-    if st.button("🗑️ Clear Chat"):
-        st.session_state.chat_history = []
-        st.session_state.chat_summary = ""
-        st.session_state.recent_turns = []
-        st.session_state.turn_count = 0
-        st.rerun()
+            st.session_state.chat_history.append(("bot", answer))
+            st.rerun()
+
+        if st.button("🗑️ Clear Chat"):
+            st.session_state.chat_history = []
+            st.session_state.chat_summary = ""
+            st.session_state.recent_turns = []
+            st.session_state.turn_count = 0
+            st.rerun()
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # TAB 2 — IPC vs BNS COMPARISON
@@ -826,24 +631,88 @@ with tab3:
         st.markdown("<br>", unsafe_allow_html=True)
         translate_btn = st.button("🔄 Translate", key="trans_btn", use_container_width=True)
 
-    # Quick lookup table
-    st.markdown("#### 📋 Common IPC → BNS Mappings")
+    # Migration Infra — paginated mapping browser
+    st.markdown("#### Migration Infra for Common IPC Sections")
     try:
         comp = load_comparator()
         df = comp.get_full_mapping_df()
-        df_display = df[df["bns_section"] != "NEW"][
-            ["ipc_section","ipc_name","bns_section","bns_name","category","note"]
-        ].rename(columns={
-            "ipc_section":"IPC §","ipc_name":"IPC Offence",
-            "bns_section":"BNS §","bns_name":"BNS Offence",
-            "category":"Category","note":"Key Change"
-        })
-        st.dataframe(
-            df_display,
-            use_container_width=True,
-            height=300,
-            hide_index=True,
-        )
+        df_display = df[df["bns_section"] != "NEW"].reset_index(drop=True)
+
+        if "mig_page" not in st.session_state:
+            st.session_state.mig_page = 0
+
+        PER_PAGE = 20
+        total_rows = len(df_display)
+        total_pages = max(1, (total_rows + PER_PAGE - 1) // PER_PAGE)
+
+        # Clamp page
+        st.session_state.mig_page = max(0, min(st.session_state.mig_page, total_pages - 1))
+
+        start = st.session_state.mig_page * PER_PAGE
+        end   = min(start + PER_PAGE, total_rows)
+        page_df = df_display.iloc[start:end]
+
+        # Build HTML rows
+        rows_html = ""
+        for _, row in page_df.iterrows():
+            ipc_s   = str(row.get("ipc_section",""))
+            ipc_n   = str(row.get("ipc_name","")).strip()
+            bns_s   = str(row.get("bns_section",""))
+            bns_n   = str(row.get("bns_name","")).strip()
+            note    = str(row.get("note","")).strip()
+            note    = "" if note in ("nan","None") else note
+            rows_html += f"""
+            <div class="mig-row">
+              <div class="mig-side ipc">
+                <div class="mig-tag">IPC § {ipc_s}</div>
+                <div class="mig-name">{ipc_n}</div>
+              </div>
+              <div class="mig-arrow">→</div>
+              <div class="mig-side bns">
+                <div class="mig-tag bns-tag">BNS § {bns_s}</div>
+                <div class="mig-name">{bns_n}</div>
+              </div>
+              {f'<div class="mig-note">📝 {note}</div>' if note else ''}
+            </div>
+            """
+
+        st.components.v1.html(f"""<!DOCTYPE html><html><head>
+        <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;500;600&display=swap');
+        *{{box-sizing:border-box;margin:0;padding:0;}}
+        body{{background:#0a0a0a;font-family:'Inter',sans-serif;padding:8px;}}
+        .mig-box{{background:#111111;border:1px solid #2a2a2a;border-left:3px solid #ec4899;padding:18px 22px;}}
+        .mig-row{{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;padding:12px 0;border-bottom:1px solid #1a1a1a;align-items:center;}}
+        .mig-row:last-child{{border-bottom:none;}}
+        .mig-side{{padding:6px 10px;}}
+        .mig-tag{{display:inline-block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;padding:2px 8px;border:1px solid rgba(236,72,153,0.3);background:rgba(236,72,153,0.07);color:#ec4899;margin-bottom:4px;}}
+        .mig-tag.bns-tag{{border-color:rgba(236,72,153,0.5);background:rgba(236,72,153,0.12);color:#f9a8d4;}}
+        .mig-name{{font-size:13px;color:#e8e0d0;line-height:1.5;}}
+        .mig-arrow{{color:#ec4899;font-size:20px;font-weight:700;text-align:center;}}
+        .mig-note{{grid-column:1/-1;font-size:11.5px;color:#888;font-style:italic;padding:4px 10px 0;}}
+        </style></head><body>
+        <div class="mig-box">{rows_html}</div>
+        </body></html>""", height=int(min(700, 80 + len(page_df) * 75)), scrolling=True)
+
+        # Pagination controls
+        pc1, pc2, pc3 = st.columns([1, 3, 1])
+        with pc1:
+            if st.button("← Previous", key="mig_prev", disabled=st.session_state.mig_page == 0, use_container_width=True):
+                st.session_state.mig_page -= 1
+                st.rerun()
+        with pc2:
+            st.markdown(
+                f'<div style="text-align:center; color:#ec4899; font-size:.82rem; letter-spacing:1.5px; '
+                f'text-transform:uppercase; padding:.55rem 0; font-weight:600;">'
+                f'Page {st.session_state.mig_page + 1} of {total_pages} &nbsp;·&nbsp; '
+                f'<span style="color:#666;">Showing {start+1}–{end} of {total_rows} mappings</span></div>',
+                unsafe_allow_html=True
+            )
+        with pc3:
+            if st.button("Next →", key="mig_next", disabled=st.session_state.mig_page >= total_pages - 1, use_container_width=True):
+                st.session_state.mig_page += 1
+                st.rerun()
+
     except Exception as e:
         st.warning(f"Could not load mapping table: {e}")
 
@@ -899,133 +768,214 @@ with tab3:
 with tab4:
     st.markdown("""
     <div class="card">
-      <h4>🏛️ Government Scheme Eligibility Checker</h4>
-      <p>Fill in your profile and discover which of 3400+ central and state government schemes you qualify for.</p>
+      <h4>◈ Scheme Advisor</h4>
+      <p>Answer a few questions and discover which of 3400+ government schemes you qualify for.</p>
     </div>
     """, unsafe_allow_html=True)
 
-    with st.form("scheme_form"):
-        r1c1, r1c2, r1c3 = st.columns(3)
-        with r1c1:
-            age = st.number_input("Age", 10, 100, 30)
-            gender = st.selectbox("Gender", ["Male", "Female", "Other"])
-        with r1c2:
-            income = st.number_input("Annual Income (LPA ₹)", 0.0, 50.0, 2.0, step=0.5)
-            caste = st.selectbox("Category", ["General","OBC","SC","ST"])
-        with r1c3:
-            location = st.selectbox("Location", ["Urban", "Rural"])
-            occupation = st.selectbox("Occupation", ["Farmer","Student","Salaried","Self-employed","Unemployed","Business"])
+    # ── Scheme chat state ─────────────────────────────────────────────────────────
+    SCHEME_QUESTIONS = [
+        ("age",               "What is your age?"),
+        ("gender",            "What is your gender? (Male / Female / Other)"),
+        ("annual_income_lpa", "What is your approximate annual household income in lakhs? (e.g. type 1.5 for ₹1.5 lakh/year, or 0 if no income)"),
+        ("caste",             "What is your caste category? (General / OBC / SC / ST)"),
+        ("location",          "Do you live in an Urban or Rural area?"),
+        ("occupation",        "What is your occupation?\n(Farmer / Student / Salaried / Self-employed / Unemployed / Business)"),
+        ("flags",             "Last step! Do any of these apply to you? Type the numbers separated by commas (or type 'none'):\n\n1. BPL card holder\n2. Differently-abled\n3. Survived domestic/sexual violence\n4. Need free legal aid\n5. Have agricultural land\n6. Have a girl child under 10 years\n7. No LPG gas connection at home\n8. Running or planning a small business"),
+    ]
 
-        r2c1, r2c2, r2c3, r2c4 = st.columns(4)
-        with r2c1: is_bpl = st.checkbox("BPL Card Holder")
-        with r2c2: has_disability = st.checkbox("Differently-abled")
-        with r2c3: is_survivor = st.checkbox("Violence Survivor")
-        with r2c4: needs_legal = st.checkbox("Needs Legal Aid")
+    def _parse_scheme_answer(field, answer):
+        a = answer.strip().lower()
+        if field == "age":
+            nums = [int(x) for x in answer.split() if x.isdigit()]
+            return nums[0] if nums else 25
+        if field == "annual_income_lpa":
+            import re as _re
+            nums = _re.findall(r"[\d.]+", answer)
+            return float(nums[0]) if nums else 2.0
+        if field == "gender":
+            if any(w in a for w in ["female","woman","lady","girl","f"]): return "female"
+            if any(w in a for w in ["male","man","boy","m"]): return "male"
+            return "other"
+        if field == "caste":
+            if "sc" in a or "scheduled caste" in a or "dalit" in a: return "sc"
+            if "st" in a or "scheduled tribe" in a or "tribal" in a or "adivasi" in a: return "st"
+            if "obc" in a or "backward" in a: return "obc"
+            return "general"
+        if field == "location":
+            return "rural" if "rural" in a or "village" in a or "gram" in a else "urban"
+        if field == "occupation":
+            for occ in ["farmer","student","salaried","self-employed","unemployed","business"]:
+                if occ in a: return occ
+            return "unemployed"
+        if field == "flags":
+            if "none" in a: return []
+            import re as _re
+            return [int(x) for x in _re.findall(r"\d", answer)]
+        return answer
 
-        r3c1, r3c2, r3c3 = st.columns(3)
-        with r3c1: has_land = st.checkbox("Has Agricultural Land")
-        with r3c2: has_girl = st.checkbox("Has Girl Child (< 10 yrs)")
-        with r3c3: no_lpg = st.checkbox("No LPG Connection")
+    def _flags_to_profile_bools(flags):
+        nums = flags if isinstance(flags, list) else []
+        return {
+            "is_bpl":               1 in nums,
+            "has_disability":       2 in nums,
+            "is_violence_survivor": 3 in nums,
+            "needs_legal_aid":      4 in nums,
+            "has_agricultural_land":5 in nums,
+            "has_girl_child":       6 in nums,
+            "no_lpg":               7 in nums,
+            "is_entrepreneur":      8 in nums,
+        }
 
-        scheme_submit = st.form_submit_button("🔍 Find Matching Schemes", use_container_width=True)
-
+    if "sc_history" not in st.session_state:
+        st.session_state.sc_history = []           # [(role, msg)]
+    if "sc_q_idx" not in st.session_state:
+        st.session_state.sc_q_idx = 0              # current question index
+    if "sc_answers" not in st.session_state:
+        st.session_state.sc_answers = {}           # field → parsed value
+    if "sc_done" not in st.session_state:
+        st.session_state.sc_done = False
+    if "sc_result" not in st.session_state:
+        st.session_state.sc_result = None
     if "scheme_profile" not in st.session_state:
         st.session_state.scheme_profile = None
     if "scheme_matched" not in st.session_state:
         st.session_state.scheme_matched = []
 
-    if scheme_submit:
-        profile = {
-            "age": age,
-            "gender": gender.lower(),
-            "annual_income_lpa": income,
-            "caste": caste.lower(),
-            "location": location.lower(),
-            "occupation": occupation.lower(),
-            "is_bpl": is_bpl,
-            "has_disability": has_disability,
-            "is_violence_survivor": is_survivor,
-            "needs_legal_aid": needs_legal,
-            "has_agricultural_land": has_land,
-            "has_girl_child": has_girl,
-            "no_lpg": no_lpg,
-        }
+    # Seed first question
+    if not st.session_state.sc_history and not st.session_state.sc_done:
+        first_q = SCHEME_QUESTIONS[0][1]
+        st.session_state.sc_history.append(("bot", f"Hello! I'll help you find government schemes you qualify for. Let's start.\n\n{first_q}"))
 
-        with st.spinner("Matching schemes…"):
+    # Display chat history
+    if st.session_state.sc_history:
+        msgs_html = ""
+        for role, msg in st.session_state.sc_history:
+            msg_escaped = msg.replace("\n", "<br>")
+            if role == "user":
+                msgs_html += f'<div class="bubble user-bubble"><span class="bubble-label">You</span><div class="bubble-text">{msg_escaped}</div></div>'
+            else:
+                msgs_html += f'<div class="bubble bot-bubble"><span class="bubble-label">◈ Scheme Advisor</span><div class="bubble-text">{msg_escaped}</div></div>'
+        st.components.v1.html(f"""<!DOCTYPE html><html><head>
+        <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=Inter:wght@400;500;600&display=swap');
+        * {{ box-sizing:border-box; margin:0; padding:0; }}
+        body {{ background:#0a0a0a; font-family:'Inter',sans-serif; padding:12px; }}
+        .bubble {{ margin-bottom:14px; max-width:88%; }}
+        .bubble-label {{ display:block; font-size:10px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; margin-bottom:5px; }}
+        .bubble-text {{ padding:13px 16px; line-height:1.75; font-size:13.5px; }}
+        .user-bubble {{ margin-left:auto; text-align:right; }}
+        .user-bubble .bubble-label {{ color:#d4af37; }}
+        .user-bubble .bubble-text {{ background:#111111; border:1px solid #2a2a2a; border-right:3px solid #d4af37; color:#e8e0d0; }}
+        .bot-bubble {{ margin-right:auto; }}
+        .bot-bubble .bubble-label {{ color:#888; font-family:'Cormorant Garamond',serif; font-size:11px; letter-spacing:.5px; text-transform:none; font-weight:600; }}
+        .bot-bubble .bubble-text {{ background:#111111; border:1px solid #2a2a2a; border-left:3px solid #444; color:#ccc; }}
+        .bot-bubble .bubble-text strong {{ color:#d4af37; }}
+        </style></head>
+        <body>{msgs_html}</body></html>""",
+        height=min(120 + len(st.session_state.sc_history) * 90, 500), scrolling=True)
+
+    # Input area — only show if not done
+    if not st.session_state.sc_done:
+        with st.form("scheme_chat_form", clear_on_submit=True):
+            sc_input = st.text_input("Your answer…", label_visibility="collapsed",
+                                     placeholder="Type your answer and press Enter")
+            sc_send = st.form_submit_button("Reply ➤", use_container_width=True)
+
+        if sc_send and sc_input.strip():
+            field, _ = SCHEME_QUESTIONS[st.session_state.sc_q_idx]
+            parsed = _parse_scheme_answer(field, sc_input)
+            st.session_state.sc_answers[field] = parsed
+            st.session_state.sc_history.append(("user", sc_input))
+            st.session_state.sc_q_idx += 1
+
+            if st.session_state.sc_q_idx < len(SCHEME_QUESTIONS):
+                next_q = SCHEME_QUESTIONS[st.session_state.sc_q_idx][1]
+                st.session_state.sc_history.append(("bot", next_q))
+            else:
+                st.session_state.sc_done = True
+                st.session_state.sc_history.append(("bot", "Thanks! Finding your matching schemes now..."))
+            st.rerun()
+
+    # Run scheme search once all answers collected
+    if st.session_state.sc_done and st.session_state.sc_result is None:
+        ans = st.session_state.sc_answers
+        flags = ans.get("flags", [])
+        profile = {
+            "age":                  ans.get("age", 25),
+            "gender":               ans.get("gender", "male"),
+            "annual_income_lpa":    ans.get("annual_income_lpa", 2.0),
+            "caste":                ans.get("caste", "general"),
+            "location":             ans.get("location", "urban"),
+            "occupation":           ans.get("occupation", "unemployed"),
+            **_flags_to_profile_bools(flags),
+        }
+        with st.spinner("Searching 3400+ schemes…"):
             try:
                 checker = load_checker()
                 result = checker.check_eligibility(profile, language="auto")
+                st.session_state.sc_result = result
+                st.session_state.scheme_profile = profile
+                st.session_state.scheme_matched = result.get("matched_schemes", [])
             except Exception as e:
                 st.error(f"Error: {e}")
-                result = None
 
-        if result:
-            st.session_state.scheme_profile = profile
-            st.session_state.scheme_matched = result.get("matched_schemes", [])
-            matched = result["matched_schemes"]
-            st.success(f"Found **{result['total_matched']}** potentially eligible schemes. Showing top {len(matched)}.")
+    # Show results
+    if st.session_state.sc_result:
+        result = st.session_state.sc_result
+        matched = result["matched_schemes"]
+        st.success(f"Found **{result['total_matched']}** matching schemes. Showing top {len(matched)}.")
 
-            # Category → CSS class mapping
-            CAT_CLASS = {
-                "agriculture": "cat-agriculture", "farmer": "cat-agriculture",
-                "social": "cat-social", "welfare": "cat-social",
-                "education": "cat-education", "scholarship": "cat-education",
-                "health": "cat-health", "medical": "cat-health",
-                "housing": "cat-housing", "shelter": "cat-housing",
-                "finance": "cat-finance", "financial": "cat-finance", "insurance": "cat-finance",
-                "women": "cat-women", "gender": "cat-women",
-                "legal": "cat-legal", "aid": "cat-legal",
-            }
+        cards_html = ""
+        for scheme in matched:
+            cat   = scheme.get("category", "")
+            benefit = scheme.get("benefit", "")
+            url   = scheme.get("url", "")
+            score = scheme.get("_score", 0)
+            level = scheme.get("level", "")
+            description = scheme.get("description", "")
+            level_color = "#d4af37" if level == "Central" else "#888"
+            link_html = f'<a class="card-link" href="{url}" target="_blank">Apply &#8599;</a>' if url else ""
+            cards_html += f"""
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">{scheme['name']}</div>
+                <div class="card-score">{score} pts</div>
+              </div>
+              <div class="card-meta">
+                <span class="badge" style="color:#d4af37;background:rgba(212,175,55,0.07);border-color:rgba(212,175,55,0.2);">{cat}</span>
+                <span class="badge" style="color:{level_color};background:rgba(255,255,255,0.03);border-color:#2a2a2a;">{level}</span>
+              </div>
+              <div class="card-benefit">&#128184; {benefit[:200]}</div>
+              <div class="card-eligibility">{description[:150]}{'&hellip;' if len(description)>150 else ''}</div>
+              {link_html}
+            </div>"""
 
-            # Scheme cards
-            for scheme in matched:
-                cat = scheme.get("category", "")
-                benefit = scheme.get("benefit", "")
-                url = scheme.get("url", "")
-                score = scheme.get("_score", 0)
-                level = scheme.get("level", "")
-                tags = scheme.get("tags", "")
-                level_color = "#4ade80" if level == "Central" else "#60a5fa"
+        st.components.v1.html(f"""<!DOCTYPE html><html><head>
+        <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;500;600&display=swap');
+        *{{box-sizing:border-box;margin:0;padding:0;}}
+        body{{background:#0a0a0a;font-family:'Inter',sans-serif;padding:8px;}}
+        .card{{background:#111111;border:1px solid #2a2a2a;border-left:4px solid #d4af37;padding:18px 22px;margin-bottom:10px;}}
+        .card-header{{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}}
+        .card-title{{font-family:'Cormorant Garamond',serif;font-size:16px;color:#e8e0d0;font-weight:700;flex:1;padding-right:12px;}}
+        .card-score{{font-size:11px;color:#d4af37;font-weight:700;background:rgba(212,175,55,0.07);padding:3px 10px;border:1px solid rgba(212,175,55,0.2);white-space:nowrap;}}
+        .card-meta{{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;}}
+        .badge{{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;padding:3px 10px;border:1px solid;}}
+        .card-benefit{{font-size:13px;color:#ccc;margin-bottom:6px;line-height:1.6;}}
+        .card-eligibility{{font-size:12px;color:#666;line-height:1.5;margin-bottom:8px;}}
+        .card-link{{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#d4af37;text-decoration:none;border-bottom:1px solid #d4af37;padding-bottom:1px;}}
+        </style></head><body>{cards_html}</body></html>""",
+        height=int(len(matched) * 200), scrolling=True)
 
-                cat_class = "cat-default"
-                for key, cls in CAT_CLASS.items():
-                    if key in cat.lower():
-                        cat_class = cls
-                        break
-
-                st.markdown(f"""
-                <div class="scheme-card">
-                  <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                    <div style="flex:1;">
-                      <span class="sc-title">{scheme['name']}</span><br>
-                      <span class="scheme-badge {cat_class}">{cat}</span>
-                      <span style="background:rgba(255,255,255,0.05); color:{level_color}; padding:2px 8px; border-radius:20px; font-size:.72rem; margin-left:.3rem; border:1px solid rgba(255,255,255,0.08);">{level}</span>
-                      <div class="sc-benefit" style="margin-top:.4rem;">💰 {benefit[:200]}</div>
-                      <div class="sc-eligibility" style="margin-top:.3rem;">{scheme.get('description','')[:130]}…</div>
-                      {f'<div style="color:#334155; font-size:.75rem; margin-top:.3rem;">🏷️ {tags[:100]}</div>' if tags else ''}
-                    </div>
-                    <div style="text-align:right; min-width:80px; padding-left:.8rem;">
-                      <span style="color:#f59e0b; font-size:.8rem; font-weight:600;">⭐ {score}pts</span><br>
-                      {f"<a href='{url}' target='_blank' style='color:#a78bfa; font-size:.78rem; text-decoration:none;'>🔗 Apply</a>" if url else ""}
-                    </div>
-                  </div>
-                </div>
-                """, unsafe_allow_html=True)
-
-            st.markdown("---")
-            st.markdown("### 🤖 AI Guide")
-            st.markdown(f'<div class="msg-bot">⚖️ {result["explanation"]}</div>', unsafe_allow_html=True)
-
-    # Follow-up Q&A using stored profile + matched schemes as context
-    if st.session_state.scheme_profile and st.session_state.scheme_matched:
         st.markdown("---")
-        st.markdown("#### 💬 Ask a follow-up about your schemes")
+        st.markdown(f'<div class="msg-bot">{result["explanation"]}</div>', unsafe_allow_html=True)
+
+        # Follow-up Q&A
+        st.markdown("---")
         with st.form("scheme_followup_form", clear_on_submit=True):
-            followup_q = st.text_input(
-                "Follow-up question…",
-                placeholder="e.g. How do I apply for MGNREGA? / Am I eligible even if I work part-time?",
-                label_visibility="collapsed",
-            )
+            followup_q = st.text_input("Ask a follow-up about your schemes…", label_visibility="collapsed",
+                                       placeholder="e.g. How do I apply for PM Kisan?")
             followup_submit = st.form_submit_button("Ask ➤", use_container_width=True)
 
         if followup_submit and followup_q.strip():
@@ -1033,28 +983,19 @@ with tab4:
                 try:
                     from nyaya_sahayak.llm_client import chat as llm_chat, ANSWER_SYSTEM_PROMPT_EN
                     profile_text = "\n".join(f"- {k}: {v}" for k, v in st.session_state.scheme_profile.items())
-                    schemes_text = "\n".join(
-                        f"- {s['name']} (score: {s.get('_score', 0)}): {s.get('benefit', '')}"
-                        for s in st.session_state.scheme_matched
-                    )
-                    followup_message = f"""[USER PROFILE]
-{profile_text}
-
-[MATCHED GOVERNMENT SCHEMES]
-{schemes_text}
-
----
-
-User Question: {followup_q}"""
+                    schemes_text = "\n".join(f"- {s['name']}: {s.get('benefit','')}" for s in st.session_state.scheme_matched)
                     followup_answer = llm_chat(
-                        [{"role": "user", "content": followup_message}],
-                        language="auto",
-                        max_tokens=600,
-                        _system_override=ANSWER_SYSTEM_PROMPT_EN,
+                        [{"role":"user","content":f"[USER PROFILE]\n{profile_text}\n\n[MATCHED SCHEMES]\n{schemes_text}\n\n---\n\nQuestion: {followup_q}"}],
+                        language="auto", max_tokens=600, _system_override=ANSWER_SYSTEM_PROMPT_EN,
                     )
                 except Exception as e:
                     followup_answer = f"⚠️ Error: {e}"
-            st.markdown(f'<div class="msg-bot">⚖️ {followup_answer}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="msg-bot">{followup_answer}</div>', unsafe_allow_html=True)
+
+        if st.button("Start Over", key="scheme_restart"):
+            for k in ["sc_history","sc_q_idx","sc_answers","sc_done","sc_result","scheme_profile","scheme_matched"]:
+                st.session_state.pop(k, None)
+            st.rerun()
 
 with tab5:
     st.markdown("""
@@ -1141,6 +1082,99 @@ with tab5:
                 mime="text/plain",
             )
             st.warning("⚠️ This is an AI-generated draft for reference only. Review with a qualified advocate before submission.")
+
+with tab6:
+    st.markdown("""
+    <div class="card">
+      <h4>🔓 Bail or No Bail Checker</h4>
+      <p>Enter a BNS section number or describe the offense to get an instant bail eligibility assessment under BNSS 2023.</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    with st.form("bail_form"):
+        bc1, bc2 = st.columns([2, 1])
+        with bc1:
+            bail_offense = st.text_area(
+                "Offense Description or BNS Section *",
+                placeholder="e.g. BNS Section 103 (Murder) — or describe: 'accused of theft of mobile phone worth ₹15,000'",
+                height=100,
+            )
+        with bc2:
+            bail_section = st.text_input("BNS Section Number (optional)", placeholder="e.g. 103, 64, 318")
+
+        st.markdown("##### Accused Circumstances (optional — helps refine assessment)")
+        ba1, ba2, ba3 = st.columns(3)
+        with ba1:
+            bail_gender   = st.selectbox("Gender", ["Not specified", "Male", "Female", "Other"])
+            bail_age      = st.number_input("Age", 0, 100, 0)
+        with ba2:
+            bail_first    = st.checkbox("First-time offender")
+            bail_sick     = st.checkbox("Sick / Infirm")
+        with ba3:
+            bail_custody  = st.number_input("Days in custody", 0, 3650, 0)
+            bail_lang     = st.selectbox("Response language", ["English", "Hindi"])
+
+        bail_submit = st.form_submit_button("⚖️ Check Bail Eligibility", use_container_width=True)
+
+    if bail_submit:
+        if not bail_offense.strip():
+            st.warning("Please describe the offense or enter a BNS section number.")
+        else:
+            with st.spinner("Analysing bail eligibility…"):
+                try:
+                    from nyaya_sahayak.llm_client import check_bail_eligibility
+                    engine = load_engine()
+
+                    # Build search query
+                    query = bail_section.strip() if bail_section.strip() else bail_offense
+                    bns_results = engine.query_bns(query, top_k=3)
+                    bns_context = engine.format_context(bns_results)
+
+                    # Build accused details string
+                    accused_parts = []
+                    if bail_gender != "Not specified": accused_parts.append(f"Gender: {bail_gender}")
+                    if bail_age > 0:                   accused_parts.append(f"Age: {bail_age}")
+                    if bail_first:                     accused_parts.append("First-time offender")
+                    if bail_sick:                      accused_parts.append("Sick / Infirm")
+                    if bail_custody > 0:               accused_parts.append(f"Days in custody: {bail_custody}")
+                    accused_details = ", ".join(accused_parts)
+
+                    language = "hi" if bail_lang == "Hindi" else "en"
+                    assessment = check_bail_eligibility(
+                        offense_description=bail_offense,
+                        bns_context=bns_context,
+                        accused_details=accused_details,
+                        language=language,
+                    )
+                except Exception as e:
+                    assessment = f"⚠️ Error: {e}"
+
+            # Display verdict with colour coding
+            verdict_color = "#1a5c2e"  # green default
+            if "NON-BAILABLE" in assessment.upper():
+                verdict_color = "#8b1a1a"
+            elif "ANTICIPATORY" in assessment.upper():
+                verdict_color = "#6b4c1a"
+
+            st.components.v1.html(f"""
+            <!DOCTYPE html><html><head>
+            <style>
+            @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap');
+            * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+            body {{ background: #0a0a0a; font-family: 'Inter', sans-serif; padding: 12px; }}
+            .assessment {{ background: #111111; border: 1px solid #2a2a2a; border-left: 4px solid {verdict_color}; padding: 24px 28px; }}
+            .assessment h2 {{ font-family: 'Cormorant Garamond', serif; color: {verdict_color}; font-size: 1.3rem; margin-bottom: 16px; }}
+            .assessment h2::before {{ content: '⚖ '; }}
+            .assessment p, .assessment li {{ font-size: 13.5px; color: #ccc; line-height: 1.75; }}
+            .assessment ul {{ padding-left: 20px; margin: 8px 0; }}
+            .assessment strong {{ color: {verdict_color}; }}
+            .assessment h3, .assessment h2:not(:first-child) {{ font-family: 'Cormorant Garamond', serif; color: #d4af37; font-size: 1rem; margin: 16px 0 8px; }}
+            pre {{ white-space: pre-wrap; font-family: inherit; font-size: 13.5px; line-height: 1.75; color: #ccc; }}
+            </style></head>
+            <body><div class="assessment"><pre>{assessment}</pre></div></body></html>
+            """, height=600, scrolling=True)
+
+            st.warning("⚠️ This assessment is AI-generated for informational purposes only. Bail decisions rest with the court. Consult a qualified advocate.")
 
 # ── Footer ───────────────────────────────────────────────────────────────────────
 st.markdown("""
