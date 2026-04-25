@@ -243,17 +243,20 @@ If only `SARVAM_API_KEY` is set, the app falls back to local indexes — chatbot
    - Connect this GitHub repo, branch `main`
    - The `app.yaml` injects `SARVAM_API_KEY` from Databricks Secrets
 
-### Option 2: Streamlit Cloud
+### Option 2: Streamlit Cloud (Lite)
+
+For lightweight demo / preview deployments where Databricks isn't available, use the slimmer dependency set:
 
 1. Sign in at [share.streamlit.io](https://share.streamlit.io)
 2. Connect this repo, main file `app.py`
-3. Add secrets via the dashboard:
+3. **Set the requirements file to `requirements_streamlit_lite.txt`** (Advanced settings)
+4. Add secrets via the dashboard:
    ```toml
    SARVAM_API_KEY = "your_key"
    HF_TOKEN = "optional_fallback"
    ```
 
-App falls back to local indexes since Streamlit Cloud has no Databricks access.
+App auto-falls-back to local indexes (parquet/CSV) since Streamlit Cloud has no Databricks access. All 6 tools still work — just keyword search instead of Mosaic AI semantic search.
 
 ---
 
