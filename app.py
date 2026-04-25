@@ -293,7 +293,7 @@ st.markdown("""
 <div class="hero">
   <span class="hero-emblem">⚖</span>
   <h1>NYAYA-SAHAYAK</h1>
-  <div class="tagline">Harvey but for Indian Legal System</div>
+  <div class="tagline">MikeRoss in the form of a Chatbot for Indian Legal System</div>
   <div class="hero-rule"></div>
   <div class="subtitle">
     <span class="pill">BNS 2023</span>
@@ -461,7 +461,7 @@ with tab1:
             <html>
             <head>
             <style>
-            @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Inter:wght@400;500;600&display=swap');
+            @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Inter:wght@400;500;600&display=swap');
             * {{ box-sizing: border-box; margin: 0; padding: 0; }}
             body {{ background: #0a0a0a; font-family: 'Inter', sans-serif; padding: 12px; }}
             .bubble {{ margin-bottom: 16px; max-width: 85%; }}
@@ -1275,10 +1275,20 @@ with tab5:
 
             st.markdown("---")
             st.markdown("#### Generated FIR Draft")
-            st.markdown(
-                f'<div class="msg-bot" style="font-family: monospace; white-space: pre-wrap;">{fir_draft}</div>',
-                unsafe_allow_html=True,
-            )
+            st.components.v1.html(f"""<!DOCTYPE html><html><head>
+            <style>
+            @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;500;600&display=swap');
+            *{{box-sizing:border-box;margin:0;padding:0;}}
+            body{{background:#0a0a0a;font-family:'Inter',sans-serif;padding:12px;}}
+            .fir-box{{background:#111111;border:1px solid #2a2a2a;border-left:3px solid #d4af37;padding:24px 28px;}}
+            .fir-box pre{{
+                white-space:pre-wrap; font-family:'Inter',sans-serif;
+                font-size:13.5px; line-height:1.8; color:#ccc;
+            }}
+            .fir-box pre strong{{color:#d4af37;}}
+            </style></head>
+            <body><div class="fir-box"><pre>{fir_draft}</pre></div></body></html>""",
+            height=720, scrolling=True)
             st.download_button(
                 label="⬇️ Download FIR Draft (.txt)",
                 data=fir_draft,
@@ -1363,7 +1373,7 @@ with tab6:
             st.components.v1.html(f"""
             <!DOCTYPE html><html><head>
             <style>
-            @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap');
+            @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;500;600&display=swap');
             * {{ box-sizing: border-box; margin: 0; padding: 0; }}
             body {{ background: #0a0a0a; font-family: 'Inter', sans-serif; padding: 12px; }}
             .assessment {{ background: #111111; border: 1px solid #2a2a2a; border-left: 4px solid {verdict_color}; padding: 24px 28px; }}
