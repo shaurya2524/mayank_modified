@@ -52,7 +52,7 @@ SYSTEM_PROMPT_HI = """आप न्याय-सहायक हैं, एक �
 
 def _get_client() -> OpenAI:
     """Return an OpenAI-compatible client pointed at Sarvam-M."""
-    api_key  = os.environ.get("sarvam_api_key", "") or os.environ.get("SARVAM_API_KEY", "") or "sk_bey0cyc7_qV5jUMSHl51Oa5EiH55Nvxe8"
+    api_key  = "sk_bey0cyc7_qV5jUMSHl51Oa5EiH55Nvxe8"
     base_url = "https://api.sarvam.ai/v1"
     model    = "sarvam-m"
 
